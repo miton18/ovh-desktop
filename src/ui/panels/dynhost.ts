@@ -27,6 +27,7 @@ import {
 import { button, el, frag } from "../dom";
 import { icon } from "../icons";
 import { toast, toastError } from "../toast";
+import { copyButton } from "./copy";
 import type { DomainContext } from "./context";
 import {
   DYNHOST_PASSWORD_MIN,
@@ -81,23 +82,6 @@ function renderUnsupported(unknown: boolean): HTMLElement {
 function revealHost(zone: string, subDomain: string): string {
   if (subDomain === "*") return `<sous-domaine>.${zone}`;
   return subDomain ? `${subDomain}.${zone}` : zone;
-}
-
-function copyButton(value: string, what: string): HTMLButtonElement {
-  return button("", {
-    class: "btn btn-ghost btn-icon btn-copy",
-    icon: icon("copy", { size: 15 }),
-    title: "Copier",
-    ariaLabel: `Copier ${what.toLowerCase()}`,
-    onClick: () => {
-      void navigator.clipboard
-        .writeText(value)
-        .then(() => toast(`${what} copié`))
-        // Le presse-papiers peut être refusé par le webview : le dire plutôt que
-        // laisser croire que la valeur est copiée.
-        .catch(() => toastError("Le presse-papiers n'est pas accessible."));
-    },
-  });
 }
 
 function revealField(key: string, value: string, what: string): HTMLElement {

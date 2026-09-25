@@ -1,6 +1,6 @@
 [package]
 name = "ovh-desktop"
-version = "0.0.1-rc1"
+version = "0.0.1-rc2"
 description = "O.V.H. — console de management OVHcloud alternative (Olès Va Hurler)"
 authors = ["@miton18"]
 license = "Apache-2.0"

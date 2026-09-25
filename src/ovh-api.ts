@@ -571,6 +571,391 @@ export type Contact = {
   trademarkId: string | null;
 };
 
+// ────────────────────────────────────────── hébergement web (/hosting/web)
+
+/**
+ * Une valeur **et son unité**. Les quotas n'en sont jamais des nombres nus, et
+ * l'unité n'est pas la même partout : un pourcentage calculé sans la regarder
+ * est faux sans prévenir.
+ */
+export type UnitAndValue = { unit: string; value: number };
+
+export type PhpVersion = { version: string; support: string };
+export type HostingAddress = { url: string | null; port: number | null };
+export type HostingServiceAccess = {
+  ftp: HostingAddress;
+  http: HostingAddress;
+  ssh: HostingAddress;
+};
+export type CountryIp = { country: string; ip: string | null; ipv6: string | null };
+
+/**
+ * La fiche d'un hébergement.
+ *
+ * `displayName` prime sur `offer` pour titrer : `offer` compte 88 valeurs dont
+ * des codes historiques (`start1m`, `deproxxl2012`) qu'on ne peut ni traduire ni
+ * tabuler.
+ */
+export type HostingService = {
+  serviceName: string;
+  displayName: string | null;
+  offer: string;
+  state: string;
+  resourceType: string;
+  primaryLogin: string;
+  home: string;
+  defaultAttachedDomain: string | null;
+
+  quotaSize: UnitAndValue;
+  quotaUsed: UnitAndValue | null;
+  trafficQuotaSize: UnitAndValue | null;
+  trafficQuotaUsed: UnitAndValue | null;
+
+  cluster: string;
+  datacenter: string;
+  filer: string | null;
+  hostingIp: string | null;
+  hostingIpv6: string | null;
+  clusterIp: string | null;
+  clusterIpv6: string | null;
+  countriesIp: CountryIp[] | null;
+  operatingSystem: string;
+  phpVersions: PhpVersion[];
+  lastOvhConfigScan: OvhDateTime | null;
+
+  /** Capacités : décident de ce que l'interface a le droit de proposer. */
+  hasCdn: boolean | null;
+  hasHostedSsl: boolean | null;
+  multipleSSL: boolean;
+  boostOffer: string | null;
+  recommendedOffer: string | null;
+  serviceManagementAccess: HostingServiceAccess;
+  updates: string[];
+  token: string | null;
+};
+
+/**
+ * Une action réellement disponible sur un multisite.
+ *
+ * L'API liste, pour **chaque** multisite, les actions qu'elle accepte. C'est la
+ * réponse à « pourquoi ce bouton répond 400 » avant qu'il réponde : sur une
+ * offre d'entrée de gamme, l'entrée `DELETE` est simplement absente, et l'API
+ * refuse avec `can't delete domain of start hosting`.
+ */
+export type AttachedDomainCapability = {
+  key: string;
+  /** `GET`, `POST`, `PUT` ou `DELETE`. */
+  method: string;
+  href: string;
+  description: string;
+};
+
+/**
+ * Le multisite **tel qu'il est lu**.
+ *
+ * À ne pas confondre avec `AttachedDomain`, qui est le payload d'écriture :
+ * celui-ci porte en plus `capabilities`, `status`, `taskId`, `isFlushable` et
+ * `vcsStatus`, et ses champs obligatoires ne sont pas nullables.
+ */
+export type AttachedDomainDetail = {
+  domain: string;
+  path: string;
+  ssl: boolean | null;
+  runtimeId: number | null;
+  firewall: string;
+  cdn: string;
+  ownLog: string | null;
+  ipLocation: string | null;
+  status: string;
+  isFlushable: boolean;
+  taskId: number | null;
+  vcsStatus: string | null;
+  /** Les actions que l'API accepte sur ce multisite, et elles seules. */
+  capabilities: AttachedDomainCapability[];
+};
+
+/** La méthode figure-t-elle dans les capacités annoncées par l'API. */
+export function domainAllows(domain: AttachedDomainDetail, method: string): boolean {
+  return domain.capabilities.some((c) => c.method.toUpperCase() === method.toUpperCase());
+}
+
+/** `false` sur les offres qui interdisent de détacher un domaine. */
+export function canDeleteAttachedDomain(domain: AttachedDomainDetail): boolean {
+  return domainAllows(domain, "DELETE");
+}
+
+/**
+ * Le payload d'**écriture** d'un multisite. Tous les champs sont modifiables
+ * **et** nullables, `domain` et `path` compris : l'API ne porte aucune
+ * obligation, c'est au formulaire de les poser.
+ */
+export type AttachedDomain = {
+  domain: string | null;
+  path: string | null;
+  ssl: boolean | null;
+  runtimeId: number | null;
+  firewall: string | null;
+  cdn: string | null;
+  ownLog: string | null;
+  ipLocation: string | null;
+  /** À `false` — le défaut — **l'API modifie la zone DNS du domaine**. */
+  bypassDNSConfiguration: boolean | null;
+};
+
+export type HostingUserCredentials = { url: string | null; port: number | null };
+export type HostingUser = {
+  login: string;
+  home: string;
+  /** `rw` ou `off` : le compte est-il ouvert. */
+  state: string;
+  /** `active`, `sftponly` ou `none` — notion distincte de `state`. */
+  sshState: string;
+  isPrimaryAccount: boolean;
+  serviceManagementCredentials: {
+    ftp: HostingUserCredentials;
+    ssh: HostingUserCredentials;
+  };
+};
+
+export type HostingUserCreate = {
+  login: string;
+  password: string;
+  home: string;
+  sshState: string;
+  state: string;
+};
+
+export type Database = {
+  name: string;
+  type: string;
+  version: string;
+  /** `stable` · `beta` · `deprecated` — l'avis de l'API sur la version. */
+  versionSupport: string;
+  databaseServiceDeprecated: boolean;
+  state: string;
+  status: string;
+  quotaSize: UnitAndValue;
+  quotaUsed: UnitAndValue;
+  server: string | null;
+  port: number;
+  user: string;
+  guiURL: string | null;
+  dumps: number;
+  mode: string;
+  databaseType: string | null;
+  sqlpersoId: number | null;
+  lastCheck: OvhDateTime | null;
+  taskId: number | null;
+};
+
+/** `deletionDate` est une **date de péremption automatique** : elle doit se voir. */
+export type DatabaseDump = {
+  id: number;
+  type: string;
+  status: string;
+  creationDate: OvhDateTime;
+  deletionDate: OvhDateTime;
+  url: string | null;
+  taskId: number | null;
+};
+
+export type Cron = {
+  id: number;
+  command: string;
+  /** Chaîne crontab brute : l'API ne la valide pas. */
+  frequency: string;
+  language: string;
+  description: string | null;
+  email: string | null;
+  status: string;
+  state: string;
+};
+
+export type CronInput = {
+  command: string;
+  frequency: string;
+  language: string;
+  description: string | null;
+  email: string | null;
+  status: string;
+};
+
+/**
+ * `value` est typée `password` par l'API **quel que soit** `type` : elle ne
+ * s'affiche jamais en clair.
+ */
+export type EnvVar = {
+  key: string;
+  value: string;
+  type: string;
+  status: string;
+  taskId: number | null;
+};
+
+export type Runtime = {
+  id: number;
+  name: string | null;
+  type: string;
+  appEnv: string;
+  publicDir: string | null;
+  appBootstrap: string | null;
+  isDefault: boolean;
+  isDeletable: boolean;
+  status: string;
+  creationDate: OvhDateTime;
+  lastUpdate: OvhDateTime;
+  taskId: number | null;
+};
+
+export type HostingSsl = {
+  provider: string;
+  type: string;
+  status: string;
+  regenerable: boolean;
+  isReportable: boolean;
+  taskId: number | null;
+};
+
+/**
+ * Tâche d'hébergement.
+ *
+ * Pas de `canAccelerate` ni `canCancel`, contrairement aux tâches de domaine :
+ * **une tâche d'hébergement ne s'annule pas**, donc aucun bouton dessus.
+ */
+export type HostingTask = {
+  id: number;
+  /** Près de 190 valeurs de la forme `objet/action` — grouper par préfixe. */
+  function: string;
+  status: string;
+  objectType: string | null;
+  objectId: string | null;
+  startDate: OvhDateTime;
+  lastUpdate: OvhDateTime | null;
+  doneDate: OvhDateTime | null;
+};
+
+export function isTerminalHostingStatus(status: string): boolean {
+  return status === "done" || status === "cancelled";
+}
+
+export const KNOWN_PHP_SUPPORT = [
+  "stable", "testing", "beta", "security", "deprecated", "end-of-life",
+] as const;
+export const KNOWN_DB_ENGINES = ["mysql", "mariadb", "postgresql", "mongodb", "redis"] as const;
+export const KNOWN_SSH_STATES = ["active", "sftponly", "none"] as const;
+export const KNOWN_ENV_VAR_TYPES = ["string", "integer", "password"] as const;
+
+export type DiskType = { type: string; unit: string; value: number };
+export type CronLanguages = {
+  php: string[];
+  nodejs: string[];
+  python: string[];
+  ruby: string[];
+};
+export type DatabaseCreationCapability = {
+  available: number;
+  engines: string[];
+  isolation: string;
+  quota: UnitAndValue;
+  type: string;
+};
+export type EmailCreationCapability = { available: number; quota: UnitAndValue };
+
+/**
+ * Ce que l'offre autorise — **avant** que l'API refuse.
+ *
+ * C'est la réponse à « pourquoi ce bouton échoue ». L'offre `domainpack`, celle
+ * fournie avec un nom de domaine, annonce `envVars: 0`, `runtimes: 0`,
+ * `extraUsers: 0`, `crontab: false`, `ssh: false`. Seules les offres Cloud Web
+ * autorisent les variables d'environnement et les runtimes — vérifié sur l'API.
+ *
+ * Les compteurs valent `0` pour « interdit » et un très grand nombre pour
+ * « sans limite pratique ». `sitesRecommended` vaut `-1` pour illimité.
+ */
+export type HostingCapabilities = {
+  attachedDomains: number;
+  extraUsers: number;
+  envVars: number;
+  runtimes: number;
+  databaseEngines: number;
+  sitesRecommended: number | null;
+
+  crontab: boolean;
+  ssh: boolean;
+  filesBrowser: boolean;
+  moduleOneClick: boolean;
+
+  disk: DiskType | null;
+  traffic: UnitAndValue | null;
+  languages: CronLanguages | null;
+  databases: DatabaseCreationCapability[] | null;
+  privateDatabases: DatabaseCreationCapability[] | null;
+  emails: EmailCreationCapability | null;
+  highlight: string | null;
+};
+
+/** Un compteur à zéro veut dire « cette offre ne le permet pas ». */
+export function capabilityAllows(count: number): boolean {
+  return count > 0;
+}
+
+export const hosting = {
+  /**
+   * Ce que l'offre autorise. À lire avant d'afficher une action : griser avec la
+   * raison vaut mieux que laisser l'API répondre 400.
+   * Route ouverte — ne nécessite pas de délégation validée.
+   */
+  offerCapabilities: (offer: string) =>
+    invoke<HostingCapabilities>("hosting_offer_capabilities", { offer }),
+  list: () => invoke<string[]>("hostings_list"),
+  fetch: () => invoke<HostingService[]>("hostings_fetch"),
+  get: (serviceName: string) => invoke<HostingService>("hosting_get", { serviceName }),
+
+  /** Rend le modèle de lecture, avec `capabilities` : ce que l'API acceptera. */
+  attachedDomains: (serviceName: string) =>
+    invoke<AttachedDomainDetail[]>("hosting_attached_domains", { serviceName }),
+  /** Écrit dans la zone DNS si `bypassDNSConfiguration` n'est pas `true`. */
+  attachedDomainCreate: (serviceName: string, payload: AttachedDomain) =>
+    invoke<HostingTask>("hosting_attached_domain_create", { serviceName, payload }),
+  attachedDomainUpdate: (serviceName: string, domain: string, payload: AttachedDomain) =>
+    invoke<void>("hosting_attached_domain_update", { serviceName, domain, payload }),
+  attachedDomainDelete: (serviceName: string, domain: string) =>
+    invoke<HostingTask>("hosting_attached_domain_delete", { serviceName, domain }),
+
+  users: (serviceName: string) => invoke<HostingUser[]>("hosting_users", { serviceName }),
+  userCreate: (serviceName: string, payload: HostingUserCreate) =>
+    invoke<HostingTask>("hosting_user_create", { serviceName, payload }),
+  userUpdate: (serviceName: string, login: string, payload: HostingUser) =>
+    invoke<void>("hosting_user_update", { serviceName, login, payload }),
+  userChangePassword: (serviceName: string, login: string, password: string) =>
+    invoke<HostingTask>("hosting_user_change_password", { serviceName, login, password }),
+  userDelete: (serviceName: string, login: string) =>
+    invoke<HostingTask>("hosting_user_delete", { serviceName, login }),
+
+  databases: (serviceName: string) => invoke<Database[]>("hosting_databases", { serviceName }),
+  databaseDumps: (serviceName: string, database: string) =>
+    invoke<DatabaseDump[]>("hosting_database_dumps", { serviceName, database }),
+  databaseDumpCreate: (serviceName: string, database: string) =>
+    invoke<HostingTask>("hosting_database_dump_create", { serviceName, database }),
+
+  crons: (serviceName: string) => invoke<Cron[]>("hosting_crons", { serviceName }),
+  cronCreate: (serviceName: string, payload: CronInput) =>
+    invoke<HostingTask>("hosting_cron_create", { serviceName, payload }),
+  cronDelete: (serviceName: string, id: number) =>
+    invoke<HostingTask>("hosting_cron_delete", { serviceName, id }),
+
+  envVars: (serviceName: string) => invoke<EnvVar[]>("hosting_env_vars", { serviceName }),
+  envVarCreate: (serviceName: string, key: string, value: string, kind: string) =>
+    invoke<HostingTask>("hosting_env_var_create", { serviceName, key, value, kind }),
+  envVarDelete: (serviceName: string, key: string) =>
+    invoke<HostingTask>("hosting_env_var_delete", { serviceName, key }),
+
+  runtimes: (serviceName: string) => invoke<Runtime[]>("hosting_runtimes", { serviceName }),
+  ssl: (serviceName: string) => invoke<HostingSsl>("hosting_ssl", { serviceName }),
+  tasks: (serviceName: string) => invoke<HostingTask[]>("hosting_tasks", { serviceName }),
+};
+
+
 // ─────────────────────────────────────────────────────────── tâches
 
 export type DomainTask = {

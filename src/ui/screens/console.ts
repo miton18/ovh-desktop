@@ -6,20 +6,30 @@
  * Toutes les données passent par `../data.ts`, jamais par `invoke` direct.
  */
 
-import { isDnssecTransitioning, isTerminalTaskStatus } from "../../ovh-api";
+import {
+  isDnssecTransitioning,
+  isTerminalHostingStatus,
+  isTerminalTaskStatus,
+} from "../../ovh-api";
 import {
   dataMode,
   describeFailure,
   getAccount,
   listProducts,
   listSections,
+  listZoneNames,
   loadDomainBundle,
+  loadHostingAddressIndex,
+  loadHostingBundle,
   getProduct,
+  refreshHostingTasks,
   refreshTasks,
   refreshZoneDnssec,
   setDataMode,
   type AccountIdentity,
   type DomainBundle,
+  type HostingAddressIndex,
+  type HostingBundle,
   type ProductSection,
   type ProductSummary,
   type SectionId,
@@ -36,6 +46,13 @@ import {
   type DomainTab,
   type DomainViewState,
 } from "../panels/state";
+import { renderHostingPage } from "../panels/hosting";
+import type { HostingContext } from "../panels/hosting-context";
+import {
+  createHostingViewState,
+  type HostingTab,
+  type HostingViewState,
+} from "../panels/hosting-state";
 
 export type ConsoleHandlers = {
   /** Demande la déconnexion : c'est l'appelant qui décide de l'écran suivant. */
@@ -64,6 +81,17 @@ export async function mountConsole(
 
   let bundle: DomainBundle | null = null;
   let viewState: DomainViewState = createDomainViewState();
+
+  // L'hébergement a sa propre page, son propre état de vue et ses propres
+  // tâches : mélanger les deux ferait afficher l'onglet d'un domaine au-dessus
+  // d'un hébergement au changement de famille.
+  let hostingBundle: HostingBundle | null = null;
+  let hostingState: HostingViewState = createHostingViewState();
+  /** Les zones du compte, pour savoir où l'API pourra écrire un multisite. */
+  let zones: string[] = [];
+  /** Les adresses des hébergements, pour relier un enregistrement à son serveur. */
+  let hostings: HostingAddressIndex = new Map();
+
   let loading = false;
   let loadError: string | null = null;
 
@@ -198,6 +226,7 @@ export async function mountConsole(
         if (id === selectedId) return;
         selectedId = id;
         viewState = createDomainViewState();
+        hostingState = createHostingViewState();
         void loadSelection();
       },
     };
@@ -213,7 +242,11 @@ export async function mountConsole(
   // -- Contenu ------------------------------------------------------------
 
   function drawContent(): void {
-    if (loading && !bundle) {
+    // `force` garde la page à l'écran pendant une relecture : remplacer un
+    // hébergement déjà affiché par un spinner à chaque écriture ferait clignoter
+    // tout l'écran pour une relecture qui dure quelques centaines de
+    // millisecondes.
+    if (loading && !bundle && !hostingBundle) {
       contentArea.replaceChildren(
         el("div", { class: "zone-state is-busy" }, [spinner(14), "Chargement…"]),
       );
@@ -239,9 +272,17 @@ export async function mountConsole(
         el("div", { class: "placeholder" }, [
           activeSection === "domains"
             ? "Aucun domaine sur ce compte."
-            : "Aucun produit dans cette famille.",
+            : activeSection === "hosting"
+              ? "Aucun hébergement web sur ce compte."
+              : "Aucun produit dans cette famille.",
         ]),
       );
+      return;
+    }
+
+    if (activeSection === "hosting") {
+      if (!hostingBundle) return;
+      contentArea.replaceChildren(renderHostingPage(makeHostingContext(hostingBundle)));
       return;
     }
 
@@ -259,10 +300,36 @@ export async function mountConsole(
     contentArea.replaceChildren(renderDomainPage(makeContext(bundle)));
   }
 
+  function makeHostingContext(current: HostingBundle): HostingContext {
+    return {
+      bundle: current,
+      state: hostingState,
+      zones,
+      rerender: () => {
+        if (!destroyed) drawContent();
+      },
+      reload: (options) => void loadSelection(options),
+      goToTab: (tab: HostingTab) => {
+        hostingState.tab = tab;
+        drawContent();
+      },
+      trackTasks: () => startTracking(),
+      // Attacher un domaine peut modifier sa zone DNS : le passage d'un écran à
+      // l'autre doit être immédiat, sinon la modification reste invisible.
+      openDomain: (zone: string) => {
+        if (!sections.some((s) => s.id === "domains")) return;
+        activeSection = "domains";
+        viewState = createDomainViewState();
+        void selectSection(zone);
+      },
+    };
+  }
+
   function makeContext(current: DomainBundle): DomainContext {
     return {
       bundle: current,
       state: viewState,
+      hostings,
       rerender: () => {
         if (!destroyed) drawContent();
       },
@@ -270,6 +337,12 @@ export async function mountConsole(
       goToTab: (tab: DomainTab) => {
         viewState.tab = tab;
         drawContent();
+      },
+      openHosting: (serviceName: string) => {
+        if (!sections.some((s) => s.id === "hosting")) return;
+        activeSection = "hosting";
+        hostingState = createHostingViewState();
+        void selectSection(serviceName);
       },
       trackTasks: () => startTracking(),
     };
@@ -288,7 +361,12 @@ export async function mountConsole(
    */
   function startTracking(): void {
     stopTracking();
-    if (destroyed || activeSection !== "domains" || !selectedId) return;
+    if (destroyed || !selectedId) return;
+    if (activeSection === "hosting") {
+      startHostingTracking(selectedId);
+      return;
+    }
+    if (activeSection !== "domains") return;
 
     const name = selectedId;
     // Une bascule DNSSEC n'est pas toujours visible dans les tâches : le statut
@@ -324,19 +402,100 @@ export async function mountConsole(
     }, TASK_POLL_MS);
   }
 
+  /**
+   * Relit les tâches d'un hébergement tant qu'il en reste une non terminale.
+   *
+   * `isTerminalHostingStatus` n'est pas `isTerminalTaskStatus` : une tâche
+   * d'hébergement finit sur `done` ou `cancelled`, et il n'existe ni `error` ni
+   * `problem` dans son énumération.
+   */
+  function startHostingTracking(serviceName: string): void {
+    taskTimer = window.setTimeout(() => {
+      void refreshHostingTasks(serviceName)
+        .then((tasks) => {
+          if (destroyed || selectedId !== serviceName) return;
+          if (hostingBundle) {
+            hostingBundle = { ...hostingBundle, tasks };
+            drawContent();
+          }
+          if (tasks.some((t) => !isTerminalHostingStatus(t.status))) {
+            startHostingTracking(serviceName);
+          } else {
+            // Une tâche terminée a changé quelque chose : c'est le moment de
+            // relire l'hébergement, pas avant.
+            void loadSelection({ force: true });
+          }
+        })
+        .catch(() => {
+          // Une relecture qui échoue n'est pas une erreur d'écran : le bouton de
+          // rechargement reste la porte de sortie.
+        });
+    }, TASK_POLL_MS);
+  }
+
   // -- Chargement ---------------------------------------------------------
+
+  async function loadHostingSelection(
+    serviceName: string,
+    options: { force?: boolean },
+  ): Promise<void> {
+    loading = true;
+    loadError = null;
+    // On ne vide la page que si elle montre un **autre** hébergement : une
+    // relecture du même doit laisser ce qui est affiché en place.
+    if (hostingBundle && hostingBundle.serviceName !== serviceName) {
+      hostingBundle = null;
+    }
+    drawContent();
+
+    try {
+      // Les zones du compte sont lues en parallèle : sans elles, le formulaire de
+      // multisite ne saurait pas dire si l'API pourra configurer le DNS.
+      const [loaded, zoneNames] = await Promise.all([
+        loadHostingBundle(serviceName, options),
+        zones.length > 0 ? Promise.resolve(zones) : listZoneNames(),
+      ]);
+      if (destroyed || selectedId !== serviceName) return;
+      zones = zoneNames;
+      hostingBundle = loaded;
+      loading = false;
+      drawContent();
+      if (loaded.tasks.some((t) => !isTerminalHostingStatus(t.status))) {
+        startTracking();
+      }
+    } catch (e) {
+      if (destroyed || selectedId !== serviceName) return;
+      loading = false;
+      const failure = describeFailure(e);
+      loadError = failure.message;
+      if (failure.needsAuth) {
+        toastError("L'accès au compte n'est plus valide. Reconnecte-toi.");
+        handlers.onLogout();
+        return;
+      }
+      drawContent();
+    }
+  }
 
   async function loadSelection(options: { force?: boolean } = {}): Promise<void> {
     stopTracking();
     drawTopbar();
 
+    if (selectedId && activeSection === "hosting") {
+      bundle = null;
+      await loadHostingSelection(selectedId, options);
+      return;
+    }
+
     if (!selectedId || activeSection !== "domains") {
       bundle = null;
+      hostingBundle = null;
       loadError = null;
       drawContent();
       return;
     }
 
+    hostingBundle = null;
     const name = selectedId;
     loading = true;
     loadError = null;
@@ -344,8 +503,14 @@ export async function mountConsole(
     drawContent();
 
     try {
-      const loaded = await loadDomainBundle(name, options);
+      // L'index des hébergements est un confort d'affichage : il part en même
+      // temps que la fiche du domaine, et son échec ne compte pas.
+      const [loaded, index] = await Promise.all([
+        loadDomainBundle(name, options),
+        loadHostingAddressIndex(),
+      ]);
       if (destroyed || selectedId !== name) return;
+      hostings = index;
       bundle = loaded;
       loading = false;
       drawContent();
@@ -370,15 +535,23 @@ export async function mountConsole(
     }
   }
 
-  async function selectSection(): Promise<void> {
-    products = await listProducts(activeSection, (enriched) => {
-      if (destroyed || activeSection !== "domains") return;
+  /** `preferred` sert au passage d'un multisite vers sa zone DNS. */
+  async function selectSection(preferred?: string): Promise<void> {
+    const section = activeSection;
+    products = await listProducts(section, (enriched) => {
+      // L'enrichissement arrive en différé : il ne doit pas écraser la liste
+      // d'une autre famille si l'utilisateur a changé entre-temps.
+      if (destroyed || activeSection !== section) return;
       products = enriched;
       drawTopbar();
     });
     if (destroyed) return;
-    selectedId = products[0]?.id ?? null;
+    selectedId =
+      preferred && products.some((p) => p.id === preferred)
+        ? preferred
+        : (products[0]?.id ?? null);
     viewState = createDomainViewState();
+    hostingState = createHostingViewState();
     drawNav();
     drawTopbar();
     await loadSelection();

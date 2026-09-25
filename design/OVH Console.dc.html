@@ -116,7 +116,7 @@ a{color:var(--color-accent);}a:hover{color:var(--color-accent-400);}
                       <span style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ o.pre }}<mark style="background:transparent;color:var(--color-accent-300);text-decoration:underline;text-underline-offset:3px">{{ o.hit }}</mark>{{ o.post }}</span>
                       <span style="font-size:12px;color:var(--color-neutral-400);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ o.offer }}</span>
                     </span>
-                    <sc-if value="{{ o.warn }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline">{{ o.status }}</span></sc-if>
+                    <sc-if value="{{ o.warn }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="white-space:nowrap;flex:none">{{ o.status }}</span></sc-if>
                     <sc-if value="{{ o.current }}" hint-placeholder-val="{{ false }}"><i class="ph ph-check" style="font-size:16px;color:var(--color-accent)"></i></sc-if>
                   </button>
                 </sc-for>
@@ -134,7 +134,7 @@ a{color:var(--color-accent);}a:hover{color:var(--color-accent-400);}
 
       <div style="display:flex;flex-direction:column;gap:var(--space-8);padding:var(--space-8) clamp(20px,4vw,48px);animation:ovhRise .35s ease-out both" key="{{ selId }}">
 
-        <sc-if value="{{ notDomain }}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ isGeneric }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;align-items:flex-end;flex-wrap:wrap;gap:var(--space-6);justify-content:space-between">
           <h1 style="margin:0;min-width:0;font-size:30px;letter-spacing:-0.02em;line-height:1.15;word-break:break-all">{{ item.name }}</h1>
           <div style="display:flex;align-items:center;gap:var(--space-3)">
@@ -277,25 +277,38 @@ a{color:var(--color-accent);}a:hover{color:var(--color-accent-400);}
               </sc-for>
             </div>
             <div style="flex:1"></div>
-            <button class="btn btn-primary" onClick="{{ z.add }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Ajouter un enregistrement</button>
+            <button class="btn btn-primary" onClick="{{ z.add }}" disabled="{{ z.adding }}" style="margin-left:auto;white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Ajouter un enregistrement</button>
           </div>
 
-          <sc-if value="{{ z.hasPending }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4);padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);background:color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));box-shadow:inset 0 0 0 1px var(--color-accent-700);animation:ovhRise .2s ease-out both">
-              <i class="ph ph-note-pencil" style="font-size:20px;color:var(--color-accent)"></i>
-              <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:2px">
-                <span style="font-size:14px;font-weight:500">{{ z.pendingLabel }}</span>
-                <span style="font-size:12px;color:var(--color-neutral-300)">Elles ne sont pas servies tant que la zone n’est pas publiée.</span>
+
+
+<sc-if value="{{ z.adding }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:var(--space-4);max-width:820px;padding:var(--space-6);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:inset 0 0 0 1px var(--color-accent-700)">
+              <div style="font-size:14px;font-weight:500">Nouvel enregistrement</div>
+              <div style="display:grid;grid-template-columns:140px minmax(0,1fr);gap:var(--space-3) var(--space-4);align-items:center">
+                <span style="font-size:12px;color:var(--color-neutral-400)">Type</span>
+                <select class="input" onChange="{{ z.nf.onType }}" style="max-width:200px;font-size:13px;cursor:pointer">
+                  <sc-for list="{{ z.nf.typeOpts }}" as="t" hint-placeholder-count="6"><option value="{{ t.v }}" selected="{{ t.sel }}">{{ t.label }}</option></sc-for>
+                </select>
+                <span style="font-size:12px;color:var(--color-neutral-400)">Sous-domaine</span>
+                <div style="display:flex;align-items:center;max-width:460px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-bg);overflow:hidden">
+                  <input value="{{ z.nf.d.sub }}" onChange="{{ z.nf.onSub }}" onKeyDown="{{ z.nf.onKey }}" autoFocus="{{ true }}" placeholder="@" style="flex:1;min-width:60px;min-height:34px;padding:0 4px 0 10px;border:0;outline:0;background:transparent;color:var(--color-text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;caret-color:var(--color-accent);text-align:right">
+                  <span style="padding:0 10px 0 2px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--color-neutral-400);white-space:nowrap">.{{ item.name }}</span>
+                </div>
+                <span style="font-size:12px;color:var(--color-neutral-400)">Cible</span>
+                <input class="input" value="{{ z.nf.d.target }}" onChange="{{ z.nf.onTarget }}" onKeyDown="{{ z.nf.onKey }}" placeholder="{{ z.nf.hint }}" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                <span style="font-size:12px;color:var(--color-neutral-400)">TTL</span>
+                <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)">
+                  <input class="input" value="{{ z.nf.d.ttl }}" onChange="{{ z.nf.onTtl }}" onKeyDown="{{ z.nf.onKey }}" inputMode="numeric" placeholder="{{ z.nf.ttlPh }}" style="width:180px;font-variant-numeric:tabular-nums;font-size:13px">
+                  <span style="font-size:12px;color:var(--color-neutral-400)">En secondes. Vide : TTL de la zone.</span>
+                </div>
               </div>
-              <button class="btn btn-ghost" onClick="{{ z.discard }}" style="white-space:nowrap">Tout annuler</button>
-              <button class="btn btn-primary" onClick="{{ z.publish }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-upload-simple"></i>Publier la zone</button>
+              <sc-if value="{{ z.nf.hasErr }}" hint-placeholder-val="{{ false }}"><div style="padding-left:calc(140px + var(--space-4));font-size:12px;color:var(--color-danger-200)">{{ z.nf.err }}</div></sc-if>
+              <div style="display:flex;gap:var(--space-3);padding-left:calc(140px + var(--space-4))">
+                <button class="btn btn-primary" onClick="{{ z.nf.save }}" disabled="{{ z.nf.invalid }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Ajouter</button>
+                <button class="btn btn-secondary" onClick="{{ z.nf.cancel }}" style="white-space:nowrap">Annuler</button>
+              </div>
             </div>
-          </sc-if>
-          <sc-if value="{{ z.deploying }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--color-neutral-300)"><i class="ph ph-circle-notch" style="font-size:14px;color:var(--color-accent);animation:ovhSpin 1s linear infinite"></i>Publication de la zone en cours…</div>
-          </sc-if>
-          <sc-if value="{{ z.upToDate }}" hint-placeholder-val="{{ true }}">
-            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--color-neutral-400)"><span style="width:6px;height:6px;border-radius:50%;background:var(--color-accent)"></span>Zone publiée : ce qui est affiché est ce qui est servi.</div>
           </sc-if>
 
           <div style="border-radius:var(--radius-md);background:var(--color-surface);overflow:auto">
@@ -364,7 +377,7 @@ a{color:var(--color-accent);}a:hover{color:var(--color-accent-400);}
                         </div>
                       </td>
                       <td style="font-variant-numeric:tabular-nums;font-size:13px;color:{{ r.ttlColor }}">{{ r.ttlLabel }}</td>
-                      <td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all;text-decoration:{{ r.deco }}">{{ r.target }}</td>
+                      <td><div style="display:flex;align-items:center;gap:8px"><span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all;text-decoration:{{ r.deco }}">{{ r.target }}</span><sc-if value="{{ r.hosted }}" hint-placeholder-val="{{ false }}"><button class="btn btn-ghost btn-icon" onClick="{{ r.goHost }}" title="{{ r.hostTitle }}" style="margin-left:auto;flex:none;white-space:nowrap;width:24px;height:24px;color:var(--color-neutral-400)"><i class="ph ph-arrow-square-out" style="font-size:14px"></i></button></sc-if></div></td>
                       <td>
                         <div style="display:flex;gap:4px;justify-content:flex-end">
                           <sc-if value="{{ r.canEdit }}" hint-placeholder-val="{{ true }}">
@@ -391,9 +404,9 @@ a{color:var(--color-accent);}a:hover{color:var(--color-accent-400);}
         </section>
 
         <section style="display:flex;flex-direction:column;gap:var(--space-4)">
-          <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:var(--space-4)">
-            <h2 style="margin:0;font-size:16px">DynHost</h2>
-            <span style="font-size:12px;color:var(--color-neutral-400)">Identifiants qu’un routeur ou un NAS utilise pour mettre à jour son IP.</span>
+          <div style="display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:var(--space-4)">
+            <div style="flex:1;min-width:240px;display:flex;align-items:baseline;flex-wrap:wrap;gap:var(--space-2) var(--space-4)"><h2 style="margin:0;font-size:16px">DynHost</h2>
+            <span style="font-size:12px;color:var(--color-neutral-400)">Identifiants qu’un routeur ou un NAS utilise pour mettre à jour son IP.</span></div><sc-if value="{{ dyn.on }}" hint-placeholder-val="{{ true }}"><button class="btn btn-primary" onClick="{{ addOpen.dyn }}" disabled="{{ add.dyn }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Créer un identifiant DynHost</button></sc-if>
           </div>
           <sc-if value="{{ dyn.off }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;align-items:center;gap:10px;padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);border:1px dashed var(--color-divider);font-size:13px;color:var(--color-neutral-300)">
@@ -440,7 +453,22 @@ a{color:var(--color-accent);}a:hover{color:var(--color-accent-400);}
                 </div>
               </div>
             </sc-if>
-            <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--color-surface)">
+            <sc-if value="{{ add.dyn }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:inset 0 0 0 1px var(--color-accent-700);">
+                <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)">
+                  <div style="display:flex;align-items:center;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-bg);overflow:hidden">
+                    <span style="padding:0 4px 0 10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--color-neutral-400);white-space:nowrap">{{ dyn.prefix }}</span>
+                    <input value="{{ dyn.suffix }}" onChange="{{ dyn.onSuffix }}" placeholder="suffixe" style="width:120px;min-height:34px;border:0;outline:0;background:transparent;color:var(--color-text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;caret-color:var(--color-accent)">
+                  </div>
+                  <input class="input" value="{{ dyn.sub }}" onChange="{{ dyn.onSub }}" placeholder="Sous-domaine, ou *" style="width:170px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <input class="input" value="{{ dyn.pass }}" onChange="{{ dyn.onPass }}" placeholder="Mot de passe (8 car. min.)" style="width:200px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                    <button class="btn btn-ghost btn-icon" onClick="{{ dyn.gen }}" title="Générer un mot de passe" style="white-space:nowrap;width:34px;height:34px;color:var(--color-neutral-300)"><i class="ph ph-shuffle" style="font-size:16px"></i></button>
+                  </div>
+                  <button class="btn btn-secondary" onClick="{{ dyn.create }}" disabled="{{ dyn.invalid }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Créer l’identifiant</button><button class="btn btn-secondary" onClick="{{ addClose }}" style="white-space:nowrap">Annuler</button>
+                </div>
+                <div style="font-size:12px;color:var(--color-neutral-400)">Identifiant complet : <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--color-accent-300)">{{ dyn.preview }}</span> · le nom du domaine est ajouté automatiquement devant le suffixe. C’est avec cet identifiant et le mot de passe que l’appareil qui met à jour l’IP (box, NAS, script) s’authentifie.</div>
+              </div></sc-if>
+<div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--color-surface)">
               <sc-for list="{{ dyn.logins }}" as="l" hint-placeholder-count="1">
                 <div style="display:flex;flex-direction:column;border-bottom:1px solid var(--color-divider)">
                   <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-6);min-height:44px;padding:0 var(--space-4) 0 var(--space-6)">
@@ -464,21 +492,7 @@ a{color:var(--color-accent);}a:hover{color:var(--color-accent-400);}
                   </sc-if>
                 </div>
               </sc-for>
-              <div style="display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-4) var(--space-6)">
-                <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)">
-                  <div style="display:flex;align-items:center;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-bg);overflow:hidden">
-                    <span style="padding:0 4px 0 10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--color-neutral-400);white-space:nowrap">{{ dyn.prefix }}</span>
-                    <input value="{{ dyn.suffix }}" onChange="{{ dyn.onSuffix }}" placeholder="suffixe" style="width:120px;min-height:34px;border:0;outline:0;background:transparent;color:var(--color-text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;caret-color:var(--color-accent)">
-                  </div>
-                  <input class="input" value="{{ dyn.sub }}" onChange="{{ dyn.onSub }}" placeholder="Sous-domaine, ou *" style="width:170px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
-                  <div style="display:flex;align-items:center;gap:4px">
-                    <input class="input" value="{{ dyn.pass }}" onChange="{{ dyn.onPass }}" placeholder="Mot de passe (8 car. min.)" style="width:200px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
-                    <button class="btn btn-ghost btn-icon" onClick="{{ dyn.gen }}" title="Générer un mot de passe" style="white-space:nowrap;width:34px;height:34px;color:var(--color-neutral-300)"><i class="ph ph-shuffle" style="font-size:16px"></i></button>
-                  </div>
-                  <button class="btn btn-secondary" onClick="{{ dyn.create }}" disabled="{{ dyn.invalid }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Créer l’identifiant</button>
-                </div>
-                <div style="font-size:12px;color:var(--color-neutral-400)">Identifiant complet : <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--color-accent-300)">{{ dyn.preview }}</span> · le nom du domaine est ajouté automatiquement devant le suffixe. C’est avec cet identifiant et le mot de passe que l’appareil qui met à jour l’IP (box, NAS, script) s’authentifie.</div>
-              </div>
+              
             </div>
           </sc-if>
         </section>
@@ -539,9 +553,9 @@ a{color:var(--color-accent);}a:hover{color:var(--color-accent-400);}
         </section>
 
         <section style="display:flex;flex-direction:column;gap:var(--space-4)">
-          <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:var(--space-4)">
-            <h2 style="margin:0;font-size:16px">Glue records</h2>
-            <span style="font-size:12px;color:var(--color-neutral-400)">Publient l’IP d’un serveur DNS situé dans ce domaine.</span>
+          <div style="display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:var(--space-4)">
+            <div style="flex:1;min-width:240px;display:flex;align-items:baseline;flex-wrap:wrap;gap:var(--space-2) var(--space-4)"><h2 style="margin:0;font-size:16px">Glue records</h2>
+            <span style="font-size:12px;color:var(--color-neutral-400)">Publient l’IP d’un serveur DNS situé dans ce domaine.</span></div><sc-if value="{{ glue.on }}" hint-placeholder-val="{{ true }}"><button class="btn btn-primary" onClick="{{ addOpen.glue }}" disabled="{{ add.glue }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Ajouter un glue record</button></sc-if>
           </div>
           <sc-if value="{{ glue.off }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;align-items:center;gap:10px;padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);border:1px dashed var(--color-divider);font-size:13px;color:var(--color-neutral-300)">
@@ -549,7 +563,16 @@ a{color:var(--color-accent);}a:hover{color:var(--color-accent-400);}
             </div>
           </sc-if>
           <sc-if value="{{ glue.on }}" hint-placeholder-val="{{ true }}">
-            <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--color-surface)">
+            <sc-if value="{{ add.glue }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:inset 0 0 0 1px var(--color-accent-700);">
+                <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)">
+                  <input class="input" value="{{ glue.host }}" onChange="{{ glue.onHost }}" placeholder="{{ glue.hostPh }}" style="width:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                  <input class="input" value="{{ glue.ips }}" onChange="{{ glue.onIps }}" placeholder="{{ glue.ipsPh }}" style="flex:1;min-width:200px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                  <button class="btn btn-secondary" onClick="{{ glue.add }}" disabled="{{ glue.invalid }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Ajouter</button><button class="btn btn-secondary" onClick="{{ addClose }}" style="white-space:nowrap">Annuler</button>
+                </div>
+                <sc-if value="{{ glue.hasErr }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--color-accent-300)">{{ glue.err }}</div></sc-if>
+                <div style="font-size:12px;color:var(--color-neutral-400)">{{ glue.capNote }}</div>
+              </div></sc-if>
+<div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--color-surface)">
               <sc-for list="{{ glue.items }}" as="g" hint-placeholder-count="1">
                 <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-6);min-height:44px;padding:0 var(--space-4) 0 var(--space-6);border-bottom:1px solid var(--color-divider);opacity:{{ g.opacity }}">
                   <span style="width:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">{{ g.host }}</span>
@@ -560,15 +583,7 @@ a{color:var(--color-accent);}a:hover{color:var(--color-accent-400);}
                   </sc-if>
                 </div>
               </sc-for>
-              <div style="display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-4) var(--space-6)">
-                <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)">
-                  <input class="input" value="{{ glue.host }}" onChange="{{ glue.onHost }}" placeholder="{{ glue.hostPh }}" style="width:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
-                  <input class="input" value="{{ glue.ips }}" onChange="{{ glue.onIps }}" placeholder="{{ glue.ipsPh }}" style="flex:1;min-width:200px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
-                  <button class="btn btn-secondary" onClick="{{ glue.add }}" disabled="{{ glue.invalid }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Ajouter</button>
-                </div>
-                <sc-if value="{{ glue.hasErr }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--color-accent-300)">{{ glue.err }}</div></sc-if>
-                <div style="font-size:12px;color:var(--color-neutral-400)">{{ glue.capNote }}</div>
-              </div>
+              
             </div>
           </sc-if>
         </section>
@@ -652,10 +667,529 @@ a{color:var(--color-accent);}a:hover{color:var(--color-accent-400);}
         </section>
         </sc-if>
         </sc-if>
+
+        <sc-if value="{{ isHosting }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4)">
+            <h1 style="margin:0;min-width:0;font-size:30px;letter-spacing:-0.02em;line-height:1.15;word-break:break-word">{{ hv.title }}</h1>
+            <span class="tag" style="background:{{ hv.stBg }};color:{{ hv.stColor }}">{{ hv.stLabel }}</span>
+            <div style="flex:1"></div>
+            <sc-if value="{{ hv.hasActivity }}" hint-placeholder-val="{{ false }}">
+              <button class="btn btn-ghost" onClick="{{ hv.goOps }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--color-neutral-200)"><i class="ph ph-circle-notch" style="font-size:15px;color:var(--color-accent);animation:ovhSpin 1s linear infinite"></i><span>{{ hv.activityLabel }}</span></button>
+            </sc-if>
+          </div>
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px var(--space-6);font-size:13px;color:var(--color-neutral-400)">
+            <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--color-neutral-200)">{{ hv.serviceName }}</span>
+            <span>Offre <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--color-neutral-200)">{{ hv.offer }}</span></span>
+            <span>{{ hv.infra }}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--space-4);margin:var(--space-3) 0">
+            <sc-for list="{{ hv.cards }}" as="f" hint-placeholder-count="6">
+              <button onClick="{{ f.go }}" class="card" style="gap:6px;padding:var(--space-4) var(--space-6);border:0;text-align:left;font:inherit;color:inherit;cursor:{{ f.cursor }}" style-hover="background:color-mix(in srgb, var(--color-text) 5%, var(--color-surface))">
+                <div style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-neutral-400)">{{ f.k }}</div>
+                <div style="font-size:15px;font-weight:500;font-variant-numeric:tabular-nums;word-break:break-word;color:{{ f.color }}">{{ f.v }}</div>
+                <sc-if value="{{ f.hasBar }}" hint-placeholder-val="{{ false }}">
+                  <div style="height:4px;border-radius:2px;background:var(--color-neutral-800);overflow:hidden"><div style="height:100%;width:{{ f.pct }};background:{{ f.barColor }};border-radius:2px"></div></div>
+                </sc-if>
+                <sc-if value="{{ f.hasSub }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--color-neutral-400)">{{ f.sub }}</div></sc-if>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-2) var(--space-6);font-size:13px">
+            <span style="font-size:12px;color:var(--color-neutral-400)">Adresses</span>
+            <sc-for list="{{ hv.ips }}" as="p" hint-placeholder-count="3">
+              <span style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:11px;color:var(--color-neutral-400)">{{ p.label }}</span>
+                <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--color-neutral-200)">{{ p.v }}</span>
+                <button class="btn btn-ghost btn-icon" onClick="{{ p.copy }}" title="Copier" style="white-space:nowrap;width:26px;height:26px;color:var(--color-neutral-400)"><i class="ph ph-copy" style="font-size:14px"></i></button>
+              </span>
+            </sc-for>
+          </div>
+          <sc-if value="{{ hv.hasAlerts }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:2px;padding:6px var(--space-2);border-radius:var(--radius-md);background:color-mix(in srgb, var(--color-danger-800) 70%, var(--color-bg));box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--color-danger-200) 30%, transparent)">
+              <sc-for list="{{ hv.alerts }}" as="a" hint-placeholder-count="2">
+                <button onClick="{{ a.go }}" title="{{ a.detail }}" style="display:flex;align-items:center;gap:10px;min-height:30px;padding:0 var(--space-3);border:0;border-radius:var(--radius-sm);background:transparent;color:{{ a.color }};font:inherit;font-size:13px;text-align:left;cursor:{{ a.cursor }}" style-hover="background:color-mix(in srgb, var(--color-danger-200) 10%, transparent)">
+                  <i class="ph-fill {{ a.icon }}" style="font-size:15px;flex:none"></i>
+                  <span style="flex:none;font-weight:500">{{ a.text }}</span>
+                  <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--color-neutral-300)">{{ a.detail }}</span>
+                  <sc-if value="{{ a.hasCta }}" hint-placeholder-val="{{ false }}"><i class="ph ph-arrow-right" style="font-size:14px;flex:none"></i></sc-if>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+
+        <div role="tablist" style="display:flex;flex-wrap:wrap;gap:var(--space-6);border-bottom:1px solid var(--color-divider);margin-bottom:calc(var(--space-2) * -1)">
+          <sc-for list="{{ htabs }}" as="t" hint-placeholder-count="6">
+            <button role="tab" aria-selected="{{ t.on }}" onClick="{{ t.pick }}" style="display:flex;align-items:center;gap:8px;min-height:40px;padding:0;border:0;border-bottom:2px solid {{ t.line }};margin-bottom:-1px;background:transparent;color:{{ t.color }};font:inherit;font-size:14px;cursor:pointer" style-hover="color:var(--color-text)">
+              <span>{{ t.label }}</span>
+              <sc-if value="{{ t.hasN }}" hint-placeholder-val="{{ false }}"><span class="tag tag-accent" style="font-size:11px;padding:0 6px">{{ t.n }}</span></sc-if>
+            </button>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ ht.sites }}" hint-placeholder-val="{{ true }}">
+        <section style="display:flex;flex-direction:column;gap:var(--space-4)">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)">
+            <span style="font-size:13px;color:var(--color-neutral-400)">{{ ms.countLabel }}</span>
+            <div style="flex:1"></div>
+            <button class="btn btn-primary" onClick="{{ ms.add }}" disabled="{{ ms.formOpen }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Ajouter un multisite</button>
+          </div>
+
+          <sc-if value="{{ ms.formOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:var(--space-4);max-width:820px;padding:var(--space-6);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:inset 0 0 0 1px var(--color-accent-700)">
+              <div style="font-size:14px;font-weight:500">{{ ms.f.title }}</div>
+              <sc-if value="{{ ms.f.editing }}" hint-placeholder-val="{{ true }}">
+                <div style="display:grid;grid-template-columns:140px minmax(0,1fr);gap:var(--space-3) var(--space-4);align-items:center">
+                  <span style="font-size:12px;color:var(--color-neutral-400)">Domaine</span>
+                  <input class="input" value="{{ ms.f.d.domain }}" onChange="{{ ms.f.onDomain }}" disabled="{{ ms.f.lockDomain }}" autoFocus="{{ true }}" placeholder="blog.exemple.fr" style="max-width:380px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                  <span style="font-size:12px;color:var(--color-neutral-400)">Dossier servi</span>
+                  <div style="display:flex;align-items:center;max-width:380px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-bg);overflow:hidden">
+                    <span style="padding:0 2px 0 10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--color-neutral-400);white-space:nowrap">{{ ms.f.home }}/</span>
+                    <input value="{{ ms.f.d.path }}" onChange="{{ ms.f.onPath }}" placeholder="www" style="flex:1;min-width:60px;min-height:34px;border:0;outline:0;background:transparent;color:var(--color-text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;caret-color:var(--color-accent)">
+                  </div>
+                  <span style="font-size:12px;color:var(--color-neutral-400)">Exécution</span>
+                  <select class="input" onChange="{{ ms.f.onRuntime }}" style="max-width:380px;font-size:13px;cursor:pointer">
+                    <sc-for list="{{ ms.f.runtimes }}" as="o" hint-placeholder-count="2"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.label }}</option></sc-for>
+                  </select>
+                  <span style="font-size:12px;color:var(--color-neutral-400)">Localisation de l’IP</span>
+                  <select class="input" onChange="{{ ms.f.onLoc }}" style="max-width:380px;font-size:13px;cursor:pointer">
+                    <sc-for list="{{ ms.f.locs }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.label }}</option></sc-for>
+                  </select>
+                  <span style="font-size:12px;color:var(--color-neutral-400)">Logs séparés</span>
+                  <input class="input" value="{{ ms.f.d.ownLog }}" onChange="{{ ms.f.onOwnLog }}" placeholder="Facultatif · domaine qui regroupe les logs" style="max-width:380px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                  <span style="font-size:12px;color:var(--color-neutral-400)">Options</span>
+                  <div style="display:flex;flex-wrap:wrap;gap:var(--space-4) var(--space-8)">
+                    <sc-for list="{{ ms.f.opts }}" as="o" hint-placeholder-count="3">
+                      <div style="display:flex;align-items:center;gap:10px">
+                        <button role="switch" aria-checked="{{ o.on }}" aria-label="{{ o.label }}" onClick="{{ o.toggle }}" disabled="{{ o.disabled }}" style="position:relative;width:40px;height:22px;flex:none;padding:0;border:1px solid {{ o.trackBorder }};border-radius:11px;background:{{ o.track }};cursor:{{ o.cursor }};opacity:{{ o.opacity }};transition:background .15s,border-color .15s"><span style="position:absolute;top:2px;left:{{ o.knobLeft }};width:16px;height:16px;border-radius:50%;background:{{ o.knob }};transition:left .15s"></span></button>
+                        <div style="display:flex;flex-direction:column"><span style="font-size:13px">{{ o.label }}</span><span style="font-size:11px;color:var(--color-neutral-400)">{{ o.note }}</span></div>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <span style="align-self:start;padding-top:2px;font-size:12px;color:var(--color-neutral-400)">Zone DNS</span>
+                  <div style="display:flex;flex-direction:column;gap:4px">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked="{{ ms.f.d.bypass }}" onChange="{{ ms.f.onBypass }}" style="accent-color:var(--color-accent)">Ne pas modifier la zone DNS</label>
+                    <span style="font-size:12px;line-height:1.5;color:var(--color-neutral-400);text-wrap:pretty">{{ ms.f.dnsHelp }}</span>
+                  </div>
+                </div>
+                <sc-if value="{{ ms.f.hasErr }}" hint-placeholder-val="{{ false }}"><div style="padding-left:calc(140px + var(--space-4));font-size:12px;color:var(--color-danger-200)">{{ ms.f.err }}</div></sc-if>
+                <div style="display:flex;gap:var(--space-3);padding-left:calc(140px + var(--space-4))">
+                  <button class="btn btn-primary" onClick="{{ ms.f.review }}" disabled="{{ ms.f.invalid }}" style="white-space:nowrap">Vérifier</button>
+                  <button class="btn btn-secondary" onClick="{{ ms.f.cancel }}" style="white-space:nowrap">Annuler</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ ms.f.confirming }}" hint-placeholder-val="{{ false }}">
+                <div style="display:grid;grid-template-columns:140px minmax(0,1fr);gap:6px var(--space-4)">
+                  <sc-for list="{{ ms.f.summary }}" as="x" hint-placeholder-count="5">
+                    <span style="font-size:12px;color:var(--color-neutral-400)">{{ x.k }}</span>
+                    <span style="font-size:13px;word-break:break-all">{{ x.v }}</span>
+                  </sc-for>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;padding:var(--space-4);border-radius:var(--radius-md);background:var(--color-bg)">
+                  <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:{{ ms.f.dnsColor }}"><i class="ph {{ ms.f.dnsIcon }}" style="font-size:16px"></i>{{ ms.f.dnsTitle }}</div>
+                  <sc-if value="{{ ms.f.hasDnsText }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;line-height:1.5;color:var(--color-neutral-300)">{{ ms.f.dnsText }}</div></sc-if>
+                  <sc-for list="{{ ms.f.dnsLines }}" as="x" hint-placeholder-count="2">
+                    <div style="display:flex;align-items:center;gap:var(--space-4);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:{{ x.color }}">
+                      <span style="width:14px;text-align:center">{{ x.sign }}</span>
+                      <span style="min-width:80px">{{ x.sub }}</span>
+                      <span style="width:56px">{{ x.type }}</span>
+                      <span style="flex:1;min-width:0;word-break:break-all;text-decoration:{{ x.deco }}">{{ x.target }}</span>
+                      <sc-if value="{{ x.hasCopy }}" hint-placeholder-val="{{ false }}"><button class="btn btn-ghost btn-icon" onClick="{{ x.copy }}" title="Copier" style="white-space:nowrap;width:26px;height:26px;color:var(--color-neutral-300)"><i class="ph ph-copy" style="font-size:14px"></i></button></sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display:flex;gap:var(--space-3)">
+                  <button class="btn btn-primary" onClick="{{ ms.f.apply }}" disabled="{{ ms.f.cantApply }}" style="white-space:nowrap">{{ ms.f.applyLabel }}</button>
+                  <button class="btn btn-secondary" onClick="{{ ms.f.back }}" style="white-space:nowrap">Retour</button>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <div style="border-radius:var(--radius-md);background:var(--color-surface);overflow:auto">
+            <table class="table" style="width:100%;min-width:960px">
+              <thead><tr>
+                <th style="text-align:left">Domaine</th>
+                <th style="text-align:left">Dossier</th>
+                <th style="text-align:left">Exécution</th>
+                <th style="text-align:left">DNS</th>
+                <th style="text-align:left">SSL</th>
+                <th style="text-align:left">Pare-feu</th>
+                <th style="text-align:left">CDN</th>
+                <th style="text-align:left">IP</th>
+                <th style="width:84px"></th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ ms.rows }}" as="r" hint-placeholder-count="3">
+                  <tr style="opacity:{{ r.opacity }}">
+                    <td><div style="display:flex;align-items:center;gap:8px"><span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">{{ r.domain }}</span><sc-if value="{{ r.isMain }}" hint-placeholder-val="{{ false }}"><span class="tag tag-neutral" style="font-size:10px;padding:0 6px">Principal</span></sc-if><sc-if value="{{ r.owned }}" hint-placeholder-val="{{ false }}"><button class="btn btn-ghost btn-icon" onClick="{{ r.goDomain }}" title="{{ r.goTitle }}" style="margin-left:auto;white-space:nowrap;width:24px;height:24px;color:var(--color-neutral-400)"><i class="ph ph-arrow-square-out" style="font-size:14px"></i></button></sc-if></div></td>
+                    <td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--color-neutral-200)">{{ r.path }}</td>
+                    <td><div style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="font-size:13px">{{ r.rt }}</span><sc-if value="{{ r.rtWarn }}" hint-placeholder-val="{{ false }}"><span class="tag" style="font-size:10px;padding:0 6px;background:var(--color-danger-800);color:var(--color-danger-200)">Plus maintenu</span></sc-if></div></td>
+                    <td><span title="{{ r.dnsTitle }}" style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="width:6px;height:6px;border-radius:50%;flex:none;background:{{ r.dnsDot }}"></span><span style="font-size:13px;color:{{ r.dnsColor }}">{{ r.dns }}</span></span></td>
+                    <td style="font-size:13px;color:var(--color-neutral-200)">{{ r.ssl }}</td>
+                    <td style="font-size:13px;color:var(--color-neutral-200)">{{ r.fw }}</td>
+                    <td style="font-size:13px;color:var(--color-neutral-200)">{{ r.cdn }}</td>
+                    <td style="font-size:13px;color:var(--color-neutral-200)">{{ r.loc }}</td>
+                    <td>
+                      <div style="display:flex;gap:4px;justify-content:flex-end">
+                        <sc-if value="{{ r.idle }}" hint-placeholder-val="{{ true }}">
+                          <button class="btn btn-ghost btn-icon" onClick="{{ r.edit }}" title="Modifier" style="white-space:nowrap;width:32px;height:32px;color:var(--color-neutral-300)"><i class="ph ph-pencil-simple" style="font-size:16px"></i></button>
+                          <button class="btn btn-ghost btn-icon" onClick="{{ r.del }}" disabled="{{ r.cantDel }}" title="{{ r.delTitle }}" style="white-space:nowrap;width:32px;height:32px;color:var(--color-neutral-300)"><i class="ph ph-link-break" style="font-size:16px"></i></button>
+                        </sc-if>
+                        <sc-if value="{{ r.pending }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;white-space:nowrap;color:var(--color-neutral-400)">{{ r.pendingLabel }}</span></sc-if>
+                      </div>
+                    </td>
+                  </tr>
+                  <sc-if value="{{ r.confirmDel }}" hint-placeholder-val="{{ false }}">
+                    <tr style="background:color-mix(in srgb, var(--color-accent) 7%, transparent)">
+                      <td colSpan="9">
+                        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)">
+                          <span style="flex:1;min-width:260px;font-size:12px;line-height:1.5;color:var(--color-accent-200)">Détacher {{ r.domain }} ? Le dossier {{ r.path }} et ses fichiers restent sur l’hébergement. La zone DNS n’est pas modifiée.</span>
+                          <button class="btn btn-primary" onClick="{{ r.delApply }}" style="white-space:nowrap">Détacher</button>
+                          <button class="btn btn-secondary" onClick="{{ r.delCancel }}" style="white-space:nowrap">Annuler</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </sc-if>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        </sc-if>
+
+        <sc-if value="{{ ht.users }}" hint-placeholder-val="{{ false }}">
+        <section style="display:flex;flex-direction:column;gap:var(--space-4)">
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:var(--space-3)"><button class="btn btn-primary" onClick="{{ addOpen.users }}" disabled="{{ add.users }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Créer un utilisateur</button></div>
+          <sc-if value="{{ add.users }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:inset 0 0 0 1px var(--color-accent-700);">
+              <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)">
+                <div style="display:flex;align-items:center;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-bg);overflow:hidden">
+                  <span style="padding:0 2px 0 10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--color-neutral-400);white-space:nowrap">{{ us.prefix }}</span>
+                  <input value="{{ us.suffix }}" onChange="{{ us.onSuffix }}" placeholder="suffixe" style="width:110px;min-height:34px;border:0;outline:0;background:transparent;color:var(--color-text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;caret-color:var(--color-accent)">
+                </div>
+                <input class="input" value="{{ us.home }}" onChange="{{ us.onHome }}" placeholder="Dossier, / par défaut" style="width:170px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                <select class="input" onChange="{{ us.onSsh }}" disabled="{{ us.sshDisabled }}" style="width:140px;font-size:13px;cursor:pointer">
+                  <sc-for list="{{ us.sshOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.label }}</option></sc-for>
+                </select>
+                <div style="display:flex;align-items:center;gap:4px">
+                  <input class="input" value="{{ us.pass }}" onChange="{{ us.onPass }}" placeholder="Mot de passe" style="width:200px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                  <button class="btn btn-ghost btn-icon" onClick="{{ us.gen }}" title="Générer un mot de passe" style="white-space:nowrap;width:34px;height:34px;color:var(--color-neutral-300)"><i class="ph ph-shuffle" style="font-size:16px"></i></button>
+                </div>
+                <button class="btn btn-secondary" onClick="{{ us.create }}" disabled="{{ us.invalid }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Créer l’utilisateur</button><button class="btn btn-secondary" onClick="{{ addClose }}" style="white-space:nowrap">Annuler</button>
+              </div>
+              <sc-if value="{{ us.hasErr }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--color-danger-200)">{{ us.err }}</div></sc-if>
+              <div style="font-size:12px;color:var(--color-neutral-400)">{{ us.note }}</div>
+            </div></sc-if>
+<sc-if value="{{ rv.show }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-6);border-radius:var(--radius-md);background:color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));box-shadow:inset 0 0 0 1px var(--color-accent-700);animation:ovhRise .2s ease-out both">
+              <div style="display:flex;align-items:center;gap:10px">
+                <i class="ph ph-key" style="font-size:18px;color:var(--color-accent)"></i>
+                <span style="flex:1;font-size:14px;font-weight:500">{{ rv.title }}</span>
+                <button class="btn btn-secondary" onClick="{{ rv.dismiss }}" style="white-space:nowrap">J’ai noté ces informations</button>
+              </div>
+              <div style="font-size:12px;color:var(--color-accent-200)">Le mot de passe n’est affiché qu’une fois. L’API ne le renvoie jamais : il pourra seulement être remplacé.</div>
+              <div style="display:flex;flex-direction:column;gap:6px;padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);background:var(--color-bg)">
+                <sc-for list="{{ rv.rows }}" as="x" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:var(--space-4);min-width:0">
+                    <span style="width:110px;flex:none;font-size:12px;color:var(--color-neutral-400)">{{ x.k }}</span>
+                    <span style="flex:1;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all">{{ x.v }}</span>
+                    <button class="btn btn-ghost btn-icon" onClick="{{ x.copy }}" title="Copier" style="white-space:nowrap;width:28px;height:28px;flex:none;color:var(--color-neutral-300)"><i class="ph ph-copy" style="font-size:15px"></i></button>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--color-surface)">
+            <sc-for list="{{ us.rows }}" as="u" hint-placeholder-count="2">
+              <div style="display:flex;flex-direction:column;border-bottom:1px solid var(--color-divider)">
+                <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4) var(--space-8);min-height:56px;padding:var(--space-3) var(--space-4) var(--space-3) var(--space-6);opacity:{{ u.opacity }}">
+                  <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:2px">
+                    <div style="display:flex;align-items:center;gap:8px"><span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">{{ u.login }}</span><sc-if value="{{ u.isPrimary }}" hint-placeholder-val="{{ false }}"><span class="tag tag-neutral" style="font-size:10px;padding:0 6px">Principal</span></sc-if></div>
+                    <span style="font-size:12px;color:var(--color-neutral-400)">Dossier <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace">{{ u.home }}</span> · {{ u.pwInfo }}</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <span style="font-size:12px;color:var(--color-neutral-400)">Compte</span>
+                    <button role="switch" aria-checked="{{ u.acc.on }}" aria-label="Compte actif" onClick="{{ u.acc.toggle }}" disabled="{{ u.acc.disabled }}" style="position:relative;width:40px;height:22px;flex:none;padding:0;border:1px solid {{ u.acc.trackBorder }};border-radius:11px;background:{{ u.acc.track }};cursor:{{ u.acc.cursor }};opacity:{{ u.acc.opacity }};transition:background .15s,border-color .15s"><span style="position:absolute;top:2px;left:{{ u.acc.knobLeft }};width:16px;height:16px;border-radius:50%;background:{{ u.acc.knob }};transition:left .15s"></span></button>
+                    <span style="width:44px;font-size:13px;color:var(--color-neutral-300)">{{ u.accLabel }}</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <span style="font-size:12px;color:var(--color-neutral-400)">Shell</span>
+                    <div style="display:flex;border:1px solid var(--color-divider);border-radius:var(--radius-md);overflow:hidden;opacity:{{ u.sshOpacity }}">
+                      <sc-for list="{{ u.ssh }}" as="m" hint-placeholder-count="3">
+                        <button onClick="{{ m.pick }}" disabled="{{ m.disabled }}" title="{{ m.title }}" style="padding:6px 12px;border:0;background:{{ m.bg }};box-shadow:{{ m.ring }};color:{{ m.color }};font:inherit;font-size:13px;cursor:pointer">{{ m.label }}</button>
+                      </sc-for>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:4px;min-width:200px;justify-content:flex-end">
+                    <sc-if value="{{ u.idle }}" hint-placeholder-val="{{ true }}">
+                      <button class="btn btn-ghost" onClick="{{ u.pwEdit }}" style="white-space:nowrap;display:flex;align-items:center;gap:6px;font-size:13px"><i class="ph ph-key" style="font-size:15px"></i>Nouveau mot de passe</button>
+                      <button class="btn btn-ghost btn-icon" onClick="{{ u.del }}" disabled="{{ u.cantDel }}" title="{{ u.delTitle }}" style="white-space:nowrap;width:32px;height:32px;color:var(--color-neutral-300)"><i class="ph ph-trash" style="font-size:16px"></i></button>
+                    </sc-if>
+                    <sc-if value="{{ u.pending }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:var(--color-neutral-400)">{{ u.pendingLabel }}</span></sc-if>
+                  </div>
+                </div>
+                <sc-if value="{{ u.pwOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3);padding:0 var(--space-6) var(--space-4)">
+                    <input class="input" value="{{ u.pw }}" onChange="{{ u.onPw }}" onKeyDown="{{ u.onPwKey }}" autoFocus="{{ true }}" placeholder="9 à 30 caractères" style="width:240px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                    <button class="btn btn-ghost" onClick="{{ u.gen }}" style="white-space:nowrap;display:flex;align-items:center;gap:6px;font-size:13px"><i class="ph ph-shuffle" style="font-size:15px"></i>Générer</button>
+                    <button class="btn btn-primary" onClick="{{ u.pwSave }}" disabled="{{ u.pwInvalid }}" style="white-space:nowrap">Remplacer</button>
+                    <button class="btn btn-secondary" onClick="{{ u.pwCancel }}" style="white-space:nowrap">Annuler</button>
+                    <span style="font-size:12px;color:var(--color-neutral-400)">Une majuscule, une minuscule et un chiffre. L’ancien cesse de fonctionner.</span>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+            
+          </div>
+        </section>
+        </sc-if>
+
+        <sc-if value="{{ ht.db }}" hint-placeholder-val="{{ false }}">
+        <section style="display:flex;flex-direction:column;gap:var(--space-4)">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)">
+            <span style="font-size:13px;color:var(--color-neutral-400)">{{ db.countLabel }}</span>
+            <div style="flex:1"></div>
+            <sc-if value="{{ db.full }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:var(--color-neutral-400)">Quota de bases atteint</span></sc-if>
+            <button class="btn btn-primary" onClick="{{ db.create }}" disabled="{{ db.full }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Créer une base</button>
+          </div>
+          <sc-for list="{{ db.rows }}" as="b" hint-placeholder-count="1">
+            <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--color-surface);overflow:hidden">
+              <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4) var(--space-8);padding:var(--space-4) var(--space-4) var(--space-4) var(--space-6)">
+                <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:6px">
+                  <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px">{{ b.name }}</span>
+                  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--color-neutral-400)">
+                    <span class="tag" style="background:{{ b.verBg }};color:{{ b.verColor }}">{{ b.engine }}</span>
+                    <span>{{ b.stateLabel }}</span><span>·</span><span>{{ b.modeLabel }}</span>
+                  </div>
+                </div>
+                <div style="width:190px;display:flex;flex-direction:column;gap:6px">
+                  <span style="font-size:12px;color:var(--color-neutral-300);font-variant-numeric:tabular-nums">{{ b.quotaLabel }}</span>
+                  <div style="height:4px;border-radius:2px;background:var(--color-neutral-800);overflow:hidden"><div style="height:100%;width:{{ b.qpct }};background:{{ b.qColor }};border-radius:2px"></div></div>
+                </div>
+                <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+                  <a class="btn btn-ghost" href="{{ b.gui }}" target="_blank" rel="noreferrer" style="white-space:nowrap;display:flex;align-items:center;gap:6px;font-size:13px;text-decoration:none">phpMyAdmin<i class="ph ph-arrow-square-out" style="font-size:14px"></i></a>
+                  <button class="btn btn-ghost" onClick="{{ b.copyConn }}" style="white-space:nowrap;display:flex;align-items:center;gap:6px;font-size:13px"><i class="ph ph-terminal" style="font-size:15px"></i>Connexion</button>
+                  <button class="btn btn-secondary" onClick="{{ b.toggle }}" aria-expanded="{{ b.open }}" style="white-space:nowrap;display:flex;align-items:center;gap:6px;font-size:13px">Sauvegardes · {{ b.dumpCount }}<i class="ph {{ b.caret }}" style="font-size:13px"></i></button>
+                </div>
+              </div>
+              <sc-if value="{{ b.deprecated }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:flex-start;gap:10px;padding:var(--space-3) var(--space-6);background:color-mix(in srgb, var(--color-danger-800) 60%, transparent);font-size:13px;line-height:1.5;color:var(--color-danger-200)">
+                  <i class="ph ph-warning" style="font-size:16px;flex:none;margin-top:2px"></i><span style="text-wrap:pretty">{{ b.depText }}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.busy }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:8px;padding:var(--space-3) var(--space-6);border-top:1px solid var(--color-divider);font-size:13px;color:var(--color-neutral-200)"><i class="ph ph-circle-notch" style="font-size:15px;color:var(--color-accent);animation:ovhSpin 1s linear infinite"></i>{{ b.statusLabel }}</div>
+              </sc-if>
+              <sc-if value="{{ b.open }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;border-top:1px solid var(--color-divider)">
+                  <sc-for list="{{ b.dumps }}" as="x" hint-placeholder-count="2">
+                    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-2) var(--space-6);min-height:44px;padding:0 var(--space-4) 0 var(--space-6);border-bottom:1px solid var(--color-divider)">
+                      <span style="width:170px;font-size:13px">{{ x.type }}</span>
+                      <span style="width:170px;font-size:13px;color:var(--color-neutral-300);font-variant-numeric:tabular-nums">{{ x.created }}</span>
+                      <span style="flex:1;min-width:220px;display:flex;align-items:center;gap:6px;font-size:12px;color:{{ x.leftColor }}"><i class="ph ph-timer" style="font-size:14px"></i>{{ x.left }}</span>
+                      <sc-if value="{{ x.idle }}" hint-placeholder-val="{{ true }}"><button class="btn btn-ghost" onClick="{{ x.ask }}" disabled="{{ x.cantRestore }}" style="white-space:nowrap;font-size:13px">Restaurer</button></sc-if>
+                    </div>
+                    <sc-if value="{{ x.confirm }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3);padding:var(--space-3) var(--space-6);background:color-mix(in srgb, var(--color-accent) 7%, transparent);border-bottom:1px solid var(--color-divider)">
+                        <span style="flex:1;min-width:260px;font-size:12px;line-height:1.5;color:var(--color-accent-200)">Le contenu actuel de {{ b.name }} sera remplacé par la sauvegarde du {{ x.created }}. Ce qui a été écrit depuis sera perdu.</span>
+                        <button class="btn btn-primary" onClick="{{ x.apply }}" style="white-space:nowrap">Restaurer</button>
+                        <button class="btn btn-secondary" onClick="{{ x.cancel }}" style="white-space:nowrap">Annuler</button>
+                      </div>
+                    </sc-if>
+                  </sc-for>
+                  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4);padding:var(--space-3) var(--space-6)">
+                    <button class="btn btn-secondary" onClick="{{ b.dumpNow }}" disabled="{{ b.busy }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Sauvegarder maintenant</button>
+                    <span style="font-size:12px;color:var(--color-neutral-400)">Chaque sauvegarde porte une date de suppression automatique. Une sauvegarde manuelle est gardée 30 jours.</span>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </section>
+        </sc-if>
+
+        <sc-if value="{{ ht.exec }}" hint-placeholder-val="{{ false }}">
+        <section style="display:flex;flex-direction:column;gap:var(--space-4)">
+          <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:var(--space-4)">
+            <h2 style="margin:0;font-size:16px">Configurations d’exécution</h2>
+            <span style="font-size:12px;color:var(--color-neutral-400)">Chaque multisite en utilise une.</span>
+          </div>
+          <div style="border-radius:var(--radius-md);background:var(--color-surface);overflow:auto">
+            <table class="table" style="width:100%;min-width:780px">
+              <thead><tr>
+                <th style="text-align:left">Nom</th>
+                <th style="text-align:left">Langage</th>
+                <th style="text-align:left">Dossier public</th>
+                <th style="text-align:left">Environnement</th>
+                <th style="text-align:left">Multisites servis</th>
+                <th></th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ rtv.rows }}" as="r" hint-placeholder-count="2">
+                  <tr>
+                    <td><div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px">{{ r.name }}</span><sc-if value="{{ r.isDefault }}" hint-placeholder-val="{{ false }}"><span class="tag tag-accent" style="font-size:10px;padding:0 6px">Par défaut</span></sc-if></div></td>
+                    <td><div style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span title="{{ r.raw }}" style="font-size:13px">{{ r.lang }}</span><sc-if value="{{ r.warn }}" hint-placeholder-val="{{ false }}"><span class="tag" style="font-size:10px;padding:0 6px;background:var(--color-danger-800);color:var(--color-danger-200)">Plus maintenu</span></sc-if></div></td>
+                    <td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--color-neutral-200)">{{ r.pub }}</td>
+                    <td style="font-size:13px;color:var(--color-neutral-200)">{{ r.env }}</td>
+                    <td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:{{ r.usedColor }};word-break:break-all">{{ r.used }}</td>
+                    <td>
+                      <div style="display:flex;justify-content:flex-end">
+                        <sc-if value="{{ r.canDefault }}" hint-placeholder-val="{{ false }}"><button class="btn btn-ghost" onClick="{{ r.setDefault }}" style="white-space:nowrap;font-size:13px">Définir par défaut</button></sc-if>
+                        <sc-if value="{{ r.pending }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:var(--color-neutral-400)">{{ r.pendingLabel }}</span></sc-if>
+                      </div>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section style="display:flex;flex-direction:column;gap:var(--space-4)">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:var(--space-4)">
+            <div style="flex:1;min-width:240px;display:flex;align-items:baseline;flex-wrap:wrap;gap:var(--space-2) var(--space-4)"><h2 style="margin:0;font-size:16px">Variables d’environnement</h2>
+            <span style="font-size:12px;color:var(--color-neutral-400)">L’API ne renvoie jamais une valeur, quel que soit son type : elle se remplace, elle ne se relit pas.</span></div><button class="btn btn-primary" onClick="{{ addOpen.env }}" disabled="{{ add.env }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Ajouter une variable</button>
+          </div>
+          <sc-if value="{{ add.env }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:inset 0 0 0 1px var(--color-accent-700);">
+              <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)">
+                <input class="input" value="{{ ev.key }}" onChange="{{ ev.onKey }}" placeholder="NOM_DE_VARIABLE" style="width:240px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                <select class="input" onChange="{{ ev.onType }}" style="width:120px;font-size:13px;cursor:pointer">
+                  <sc-for list="{{ ev.types }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.v }}</option></sc-for>
+                </select>
+                <input class="input" type="password" value="{{ ev.value }}" onChange="{{ ev.onValue }}" placeholder="Valeur" style="width:240px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                <button class="btn btn-secondary" onClick="{{ ev.add }}" disabled="{{ ev.invalid }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Ajouter</button><button class="btn btn-secondary" onClick="{{ addClose }}" style="white-space:nowrap">Annuler</button>
+              </div>
+              <sc-if value="{{ ev.hasErr }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--color-danger-200)">{{ ev.err }}</div></sc-if>
+            </div></sc-if>
+<div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--color-surface)">
+            <sc-for list="{{ ev.rows }}" as="v" hint-placeholder-count="2">
+              <div style="display:flex;flex-direction:column;border-bottom:1px solid var(--color-divider)">
+                <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-6);min-height:44px;padding:0 var(--space-4) 0 var(--space-6);opacity:{{ v.opacity }}">
+                  <span style="width:240px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all">{{ v.key }}</span>
+                  <span class="tag tag-neutral" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace">{{ v.type }}</span>
+                  <span style="flex:1;min-width:120px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;letter-spacing:2px;color:var(--color-neutral-500)">••••••••••</span>
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <sc-if value="{{ v.idle }}" hint-placeholder-val="{{ true }}">
+                      <button class="btn btn-ghost" onClick="{{ v.edit }}" style="white-space:nowrap;display:flex;align-items:center;gap:6px;font-size:13px"><i class="ph ph-arrows-clockwise" style="font-size:15px"></i>Remplacer la valeur</button>
+                      <button class="btn btn-ghost btn-icon" onClick="{{ v.del }}" title="Supprimer" style="white-space:nowrap;width:32px;height:32px;color:var(--color-neutral-300)"><i class="ph ph-trash" style="font-size:16px"></i></button>
+                    </sc-if>
+                    <sc-if value="{{ v.pending }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:var(--color-neutral-400)">{{ v.pendingLabel }}</span></sc-if>
+                  </div>
+                </div>
+                <sc-if value="{{ v.editing }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3);padding:0 var(--space-6) var(--space-4)">
+                    <input class="input" type="password" value="{{ v.draft }}" onChange="{{ v.onDraft }}" onKeyDown="{{ v.onKey }}" autoFocus="{{ true }}" placeholder="Nouvelle valeur" style="width:300px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                    <button class="btn btn-primary" onClick="{{ v.save }}" disabled="{{ v.invalid }}" style="white-space:nowrap">Remplacer</button>
+                    <button class="btn btn-secondary" onClick="{{ v.cancel }}" style="white-space:nowrap">Annuler</button>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+            <sc-if value="{{ ev.empty }}" hint-placeholder-val="{{ false }}"><div style="padding:var(--space-4) var(--space-6);border-bottom:1px solid var(--color-divider);font-size:13px;color:var(--color-neutral-400)">Aucune variable définie.</div></sc-if>
+            
+          </div>
+        </section>
+        </sc-if>
+
+        <sc-if value="{{ ht.cron }}" hint-placeholder-val="{{ false }}">
+        <section style="display:flex;flex-direction:column;gap:var(--space-4)">
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:var(--space-3)"><button class="btn btn-primary" onClick="{{ addOpen.cron }}" disabled="{{ add.cron }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Nouvelle tâche planifiée</button></div>
+          <sc-if value="{{ add.cron }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:var(--space-4);max-width:820px;padding:var(--space-6);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:inset 0 0 0 1px var(--color-accent-700)">
+            <div style="font-size:14px;font-weight:500">Nouvelle tâche planifiée</div>
+            <div style="display:grid;grid-template-columns:140px minmax(0,1fr);gap:var(--space-3) var(--space-4);align-items:center">
+              <span style="font-size:12px;color:var(--color-neutral-400)">Script</span>
+              <div style="display:flex;align-items:center;max-width:460px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-bg);overflow:hidden">
+                <span style="padding:0 2px 0 10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--color-neutral-400);white-space:nowrap">{{ cr.home }}/</span>
+                <input value="{{ cr.command }}" onChange="{{ cr.onCommand }}" placeholder="www/cron.php" style="flex:1;min-width:80px;min-height:34px;border:0;outline:0;background:transparent;color:var(--color-text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;caret-color:var(--color-accent)">
+              </div>
+              <span style="font-size:12px;color:var(--color-neutral-400)">Fréquence</span>
+              <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)">
+                <input class="input" value="{{ cr.frequency }}" onChange="{{ cr.onFrequency }}" placeholder="0 3 * * *" style="width:180px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                <span style="font-size:12px;color:{{ cr.freqColor }}">{{ cr.freqText }}</span>
+              </div>
+              <span style="font-size:12px;color:var(--color-neutral-400)">Langage</span>
+              <select class="input" onChange="{{ cr.onLanguage }}" style="max-width:240px;font-size:13px;cursor:pointer">
+                <sc-for list="{{ cr.langs }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.label }}</option></sc-for>
+              </select>
+              <span style="font-size:12px;color:var(--color-neutral-400)">Description</span>
+              <input class="input" value="{{ cr.description }}" onChange="{{ cr.onDescription }}" placeholder="Facultatif" style="max-width:460px;font-size:13px">
+              <span style="font-size:12px;color:var(--color-neutral-400)">Erreurs envoyées à</span>
+              <input class="input" value="{{ cr.email }}" onChange="{{ cr.onEmail }}" placeholder="Facultatif · reçoit la sortie d’erreur" style="max-width:460px;font-size:13px">
+            </div>
+            <sc-if value="{{ cr.hasErr }}" hint-placeholder-val="{{ false }}"><div style="padding-left:calc(140px + var(--space-4));font-size:12px;color:var(--color-danger-200)">{{ cr.err }}</div></sc-if>
+            <div style="display:flex;gap:var(--space-3);padding-left:calc(140px + var(--space-4))">
+              <button class="btn btn-primary" onClick="{{ cr.add }}" disabled="{{ cr.invalid }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Planifier</button><button class="btn btn-secondary" onClick="{{ addClose }}" style="white-space:nowrap">Annuler</button>
+            </div>
+          </div></sc-if>
+<div style="border-radius:var(--radius-md);background:var(--color-surface);overflow:auto">
+            <table class="table" style="width:100%;min-width:820px">
+              <thead><tr>
+                <th style="text-align:left">Commande</th>
+                <th style="text-align:left">Fréquence</th>
+                <th style="text-align:left">Langage</th>
+                <th style="text-align:left">Erreurs envoyées à</th>
+                <th style="width:60px"></th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ cr.rows }}" as="c" hint-placeholder-count="2">
+                  <tr style="opacity:{{ c.opacity }}">
+                    <td><div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all">{{ c.command }}</span><sc-if value="{{ c.hasDesc }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:var(--color-neutral-400)">{{ c.desc }}</span></sc-if></div></td>
+                    <td><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px">{{ c.freqText }}</span><span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--color-neutral-400)">{{ c.frequency }}</span></div></td>
+                    <td><div style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="font-size:13px">{{ c.lang }}</span><sc-if value="{{ c.warn }}" hint-placeholder-val="{{ false }}"><span class="tag" style="font-size:10px;padding:0 6px;background:var(--color-danger-800);color:var(--color-danger-200)">Plus maintenu</span></sc-if></div></td>
+                    <td style="font-size:13px;color:var(--color-neutral-300);word-break:break-all">{{ c.email }}</td>
+                    <td>
+                      <div style="display:flex;justify-content:flex-end">
+                        <sc-if value="{{ c.idle }}" hint-placeholder-val="{{ true }}"><button class="btn btn-ghost btn-icon" onClick="{{ c.del }}" title="Supprimer" style="white-space:nowrap;width:32px;height:32px;color:var(--color-neutral-300)"><i class="ph ph-trash" style="font-size:16px"></i></button></sc-if>
+                        <sc-if value="{{ c.pending }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;white-space:nowrap;color:var(--color-neutral-400)">{{ c.pendingLabel }}</span></sc-if>
+                      </div>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+            <sc-if value="{{ cr.empty }}" hint-placeholder-val="{{ false }}"><div style="padding:var(--space-6);font-size:13px;color:var(--color-neutral-400)">Aucune tâche planifiée.</div></sc-if>
+          </div>
+          
+        </section>
+        </sc-if>
+
+        <sc-if value="{{ ht.ops }}" hint-placeholder-val="{{ false }}">
+        <section style="display:flex;flex-direction:column;gap:var(--space-4)">
+          <div style="border-radius:var(--radius-md);background:var(--color-surface);overflow:auto">
+            <table class="table" style="width:100%;min-width:720px">
+              <thead><tr>
+                <th style="text-align:left">Opération</th>
+                <th style="text-align:left;white-space:nowrap">Statut</th>
+                <th style="text-align:left;white-space:nowrap">Demandée</th>
+                <th style="text-align:left;white-space:nowrap">Terminée</th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ hops.rows }}" as="o" hint-placeholder-count="3">
+                  <tr>
+                    <td><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:14px">{{ o.fn }}</span><sc-if value="{{ o.hasObj }}" hint-placeholder-val="{{ false }}"><span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--color-neutral-400)">{{ o.obj }}</span></sc-if></div></td>
+                    <td>
+                      <span class="tag" style="display:inline-flex;align-items:center;gap:6px;background:{{ o.tagBg }};color:{{ o.tagColor }}">
+                        <sc-if value="{{ o.running }}" hint-placeholder-val="{{ false }}"><i class="ph ph-circle-notch" style="font-size:12px;animation:ovhSpin 1s linear infinite"></i></sc-if>
+                        <sc-if value="{{ o.hasIcon }}" hint-placeholder-val="{{ false }}"><i class="ph {{ o.tagIcon }}" style="font-size:12px"></i></sc-if>
+                        {{ o.statusLabel }}
+                      </span>
+                    </td>
+                    <td style="font-size:13px;color:var(--color-neutral-300);font-variant-numeric:tabular-nums;white-space:nowrap"><span title="{{ o.createdTitle }}">{{ o.created }}</span></td>
+                    <td style="font-size:13px;color:var(--color-neutral-300);font-variant-numeric:tabular-nums;white-space:nowrap"><span title="{{ o.doneTitle }}">{{ o.done }}</span></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+            <sc-if value="{{ hops.empty }}" hint-placeholder-val="{{ false }}"><div style="padding:var(--space-6);font-size:13px;color:var(--color-neutral-400)">Aucune opération sur cet hébergement.</div></sc-if>
+          </div>
+          <div style="font-size:12px;color:var(--color-neutral-400)">Une opération d’hébergement ne s’annule pas et ne s’accélère pas : elle va jusqu’au bout.</div>
+        </section>
+        </sc-if>
+        </sc-if>
       </div>
 
       <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
-        <div style="position:fixed;right:var(--space-8);bottom:var(--space-8);z-index:30;display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-4) var(--space-3) var(--space-6);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-md);font-size:13px;animation:ovhRise .25s ease-out both">
+        <div style="position:fixed;right:var(--space-8);bottom:{{ toastBottom }};z-index:30;display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-4) var(--space-3) var(--space-6);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-md);font-size:13px;animation:ovhRise .25s ease-out both">
           <i class="ph ph-check-circle" style="font-size:18px;color:var(--color-accent)"></i>
           <span>{{ toast.msg }}</span>
           <sc-if value="{{ toast.canUndo }}" hint-placeholder-val="{{ false }}">
@@ -693,12 +1227,10 @@ const DATA = {
       { id: 'martin-ceramique.com', offer: '.com · Renouvellement manuel', status: 'Expire bientôt', ok: false, infos: [] },
       { id: 'cmartin.eu', offer: '.eu · Renouvellement automatique', status: 'Actif', ok: true, infos: [] },
     ] },
-  hosting: { label: 'Hébergements web', icon: 'ph-browsers',
-    primary: { label: 'Accès FTP', icon: 'ph-folder-open' }, actions2: [{ label: 'Bases de données', icon: 'ph-database' }],
+  hosting: { label: 'Hébergements web', icon: 'ph-browsers', primary: {}, actions2: [],
     items: [
-      { id: 'atelierzz.cluster121.hosting.ovh.net', offer: 'Perso · Cluster 121', status: 'Actif', ok: true,
-        infos: [['Espace disque', '38 Go / 100 Go'], ['PHP', '8.3'], ['Bases de données', '1 / 1'], ['Certificat SSL', "Let's Encrypt"], ['Renouvellement', '14 mars 2027']],
-        table: T('Multisite', ['Domaine', 'Dossier racine', 'SSL'], [['atelier-martin.fr', 'www', 'Actif'], ['www.atelier-martin.fr', 'www', 'Actif']]) },
+      { id: 'atelierzz.cluster121.hosting.ovh.net', offer: 'Site de l’atelier · perso2014', status: 'Actif', ok: true, infos: [] },
+      { id: 'cmartinv.cluster028.hosting.ovh.net', offer: 'start1m · cluster028', status: 'À mettre à jour', ok: false, infos: [] },
     ] },
   email: { label: 'E-mails', icon: 'ph-envelope-simple',
     primary: { label: 'Créer une adresse', icon: 'ph-plus' }, actions2: [],
@@ -709,7 +1241,7 @@ const DATA = {
     ] },
 };
 const PROFILES = {
-  'Complet': { dedicated: 2, vps: 1, domains: 3, hosting: 1, email: 1 },
+  'Complet': { dedicated: 2, vps: 1, domains: 3, hosting: 2, email: 1 },
   'Sans serveur dédié': { dedicated: 0, vps: 1, domains: 3, hosting: 1, email: 1 },
   'Un seul domaine': { dedicated: 0, vps: 0, domains: 1, hosting: 1, email: 0 },
 };
@@ -767,7 +1299,7 @@ const DOMS = {
     contacts: { owner: CM, admin: CM, tech: CM, billing: CM },
     zoneTtl: 3600,
     records: [
-      { sub: '', type: 'A', ttl: null, target: '51.91.24.137' },
+      { sub: '', type: 'A', ttl: null, target: '213.186.33.19' },
       { sub: 'www', type: 'CNAME', ttl: null, target: 'cmartin.eu.' },
     ],
     dyn: [], dynLogins: [], tasks: [] },
@@ -793,8 +1325,108 @@ const STATUS = {
   cancelled: ['Annulée', 'var(--color-neutral-800)', 'var(--color-neutral-400)', 'ph-x'],
 };
 
+const dayMs = 86400000;
+const KiB = 1024;
+const UNIT = { B: 1, KB: KiB, MB: KiB ** 2, GB: KiB ** 3, TB: KiB ** 4 };
+const toB = q => q ? q.value * (UNIT[q.unit] || 1) : null;
+const fmtB = b => { for (const [l, v] of [['To', KiB ** 4], ['Go', KiB ** 3], ['Mo', KiB ** 2], ['Ko', KiB]]) if (b >= v) { const n = b / v; return String(n >= 100 ? Math.round(n) : Math.round(n * 10) / 10).replace('.', ',') + ' ' + l; } return Math.round(b) + ' o'; };
+const fmtDT = ts => { const d = new Date(ts); return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}, ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+const fmtDay = ts => { const d = new Date(ts); return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; };
+const verOf = t => (/(\d+(?:\.\d+)?)/.exec(t || '') || [])[1];
+const rtLabel = t => { let m;
+  if ((m = /^(?:phpfpm-|php-?)(\d+\.\d+)$/.exec(t))) return 'PHP ' + m[1];
+  if (/^\d+\.\d+$/.test(t)) return 'PHP ' + t;
+  if ((m = /^node(?:js)?-?(\d+)$/.exec(t))) return 'Node.js ' + m[1];
+  if ((m = /^python-?([\d.]+)$/.exec(t))) return 'Python ' + m[1];
+  if ((m = /^ruby-?([\d.]+)$/.exec(t))) return 'Ruby ' + m[1];
+  return t; };
+const H_STATE = { active: ['Actif', 'ok'], maintenance: ['Maintenance', 'neutral'], blocked: ['Bloqué', 'warn'], bloqued: ['Bloqué', 'warn'], hardBlocked: ['Bloqué définitivement', 'bad'], hardBloqued: ['Bloqué définitivement', 'bad'] };
+const DANGER = ['var(--color-danger-800)', 'var(--color-danger-200)'];
+const ENG = { mysql: 'MySQL', mariadb: 'MariaDB', postgresql: 'PostgreSQL', redis: 'Redis', mongodb: 'MongoDB' };
+const DB_STATE = { ok: 'Opérationnelle', readonly: 'Lecture seule', close: 'Fermée' };
+const DB_STATUS = { creating: 'Création en cours', deleting: 'Suppression en cours', checking: 'Vérification en cours', dumping: 'Sauvegarde en cours', importing: 'Import en cours', optimizing: 'Optimisation en cours', restoring: 'Restauration en cours', updating: 'Mise à jour en cours', locked: 'Verrouillée' };
+const DB_MODE = { classic: 'Mode classique', besteffort: 'Best effort', module: 'Module' };
+const DUMP_L = { now: 'Manuelle', 'daily.1': 'Quotidienne (J-1)', 'weekly.1': 'Hebdomadaire (S-1)' };
+const COUNTRIES = [['FR', 'France'], ['BE', 'Belgique'], ['CA', 'Canada'], ['CZ', 'Tchéquie'], ['DE', 'Allemagne'], ['ES', 'Espagne'], ['FI', 'Finlande'], ['GB', 'Royaume-Uni'], ['IE', 'Irlande'], ['IT', 'Italie'], ['LT', 'Lituanie'], ['NL', 'Pays-Bas'], ['PL', 'Pologne'], ['PT', 'Portugal']];
+const FN_OBJ = { attachedDomain: 'Multisite', user: 'Utilisateur FTP', database: 'Base de données', cron: 'Tâche planifiée', envVar: 'Variable d’environnement', runtime: 'Configuration d’exécution', ssl: 'Certificat SSL' };
+const FN_VERB = { create: 'création', delete: 'suppression', update: 'modification', changePassword: 'nouveau mot de passe', dump: 'sauvegarde', restore: 'restauration' };
+const fnLabel = f => { const [o, v] = (f || '').split('/'); return `${FN_OBJ[o] || o} · ${FN_VERB[v] || v || ''}`; };
+const CRON_F = /^(\*|\d+(-\d+)?)(\/\d+)?(,(\*|\d+(-\d+)?)(\/\d+)?)*$/;
+const DAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const cronText = f => {
+  const p = (f || '').trim().split(/\s+/), max = [59, 23, 31, 12, 7];
+  if (p.length !== 5 || !p.every((x, i) => CRON_F.test(x) && (x.replace(/\/\d+/g, '').match(/\d+/g) || []).every(n => +n <= max[i]))) return null;
+  const [mi, ho, dm, mo, dw] = p, num = x => /^\d+$/.test(x); let m;
+  if (dm === '*' && mo === '*' && dw === '*') {
+    if ((m = /^\*\/(\d+)$/.exec(mi)) && ho === '*') return `Toutes les ${m[1]} minutes`;
+    if (mi === '*' && ho === '*') return 'Chaque minute';
+    if (num(mi) && ho === '*') return `Toutes les heures, à la minute ${mi}`;
+    if (num(mi) && (m = /^\*\/(\d+)$/.exec(ho))) return `Toutes les ${m[1]} heures`;
+  }
+  if (num(mi) && num(ho)) {
+    const t = `${ho.padStart(2, '0')}:${mi.padStart(2, '0')}`;
+    if (dm === '*' && mo === '*' && dw === '*') return `Tous les jours à ${t}`;
+    if (dm === '*' && mo === '*' && /^[0-7]$/.test(dw)) return `Chaque ${DAYS[+dw % 7]} à ${t}`;
+    if (num(dm) && mo === '*' && dw === '*') return `Le ${dm} de chaque mois à ${t}`;
+  }
+  return 'Planification personnalisée';
+};
+const pwOk = p => p.length >= 9 && p.length <= 30 && /[A-Z]/.test(p) && /[a-z]/.test(p) && /\d/.test(p);
+const genPw = () => { const c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'; for (;;) { const a = new Uint32Array(16); crypto.getRandomValues(a); let p = ''; a.forEach(n => { p += c[n % c.length]; }); if (pwOk(p)) return p; } };
+const SW = (on, disabled, busy) => ({ on, disabled: !!disabled, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled && !busy ? 0.45 : 1,
+  track: on ? 'color-mix(in srgb, var(--color-accent) 30%, transparent)' : 'var(--color-neutral-800)', trackBorder: on ? 'var(--color-accent)' : 'var(--color-divider)',
+  knob: on ? 'var(--color-accent-200)' : 'var(--color-neutral-400)', knobLeft: on ? '20px' : '2px' });
+const SEG = on => ({ bg: on ? 'color-mix(in srgb, var(--color-accent) 12%, transparent)' : 'transparent', ring: on ? 'inset 0 0 0 1px var(--color-accent)' : 'none', color: on ? 'var(--color-accent-200)' : 'var(--color-neutral-200)' });
+const zoneOf = name => { const n = (name || '').toLowerCase().replace(/\.$/, ''); const k = Object.keys(DOMS).filter(k => n === k || n.endsWith('.' + k)).sort((a, b) => b.length - a.length)[0]; return k ? { zone: k, sub: n === k ? '' : n.slice(0, -(k.length + 1)) } : null; };
+
+const HOSTS = {
+  'atelierzz.cluster121.hosting.ovh.net': {
+    displayName: 'Site de l’atelier', offer: 'perso2014', state: 'active', primaryLogin: 'atelierzz', home: '/homez.121/atelierzz', defaultAttachedDomain: 'atelier-martin.fr', expiration: '14 mars 2027',
+    quotaSize: { unit: 'GB', value: 100 }, quotaUsed: { unit: 'MB', value: 38912 }, trafficQuotaSize: null, trafficQuotaUsed: null,
+    cluster: 'cluster121', filer: '121', datacenter: 'gra3', hostingIp: '213.186.33.40', hostingIpv6: '2001:41d0:1:1b00:213:186:33:40', operatingSystem: 'linux',
+    phpVersions: [{ version: '8.3', support: 'supported' }, { version: '8.2', support: 'supported' }, { version: '8.1', support: 'supported' }, { version: '7.4', support: 'deprecated' }],
+    hasCdn: false, hasHostedSsl: true, sshAllowed: true, recommendedOffer: null, dbMax: 1,
+    attached: [
+      { domain: 'atelier-martin.fr', path: 'www', ssl: true, runtimeId: 1, firewall: 'active', cdn: 'none', ownLog: null, ipLocation: 'FR' },
+      { domain: 'www.atelier-martin.fr', path: 'www', ssl: true, runtimeId: 1, firewall: 'active', cdn: 'none', ownLog: 'atelier-martin.fr', ipLocation: 'FR' },
+      { domain: 'boutique.atelier-martin.fr', path: 'boutique', ssl: true, runtimeId: 2, firewall: 'none', cdn: 'none', ownLog: null, ipLocation: 'FR' },
+    ],
+    runtimes: [
+      { id: 1, name: 'Par défaut', type: 'phpfpm-8.3', publicDir: null, appEnv: 'production', isDefault: true, isDeletable: false },
+      { id: 2, name: 'Boutique', type: 'phpfpm-7.4', publicDir: 'public', appEnv: 'production', isDefault: false, isDeletable: true },
+    ],
+    users: [
+      { login: 'atelierzz', home: '/', state: 'rw', sshState: 'active', isPrimaryAccount: true, pwDate: '12 janv. 2026, 10:14' },
+      { login: 'atelierzz-thomas', home: '/boutique', state: 'rw', sshState: 'sftponly', isPrimaryAccount: false, pwDate: '3 juin 2026, 16:40' },
+    ],
+    databases: [
+      { name: 'atelierzzmain.mysql.db', type: 'mysql', version: '8.0', versionSupport: 'stable', state: 'ok', status: 'created', quotaSize: { unit: 'MB', value: 512 }, quotaUsed: { unit: 'MB', value: 187.4 }, server: 'atelierzzmain.mysql.db', port: 3306, user: 'atelierzzmain', guiURL: 'https://phpmyadmin.hosting.ovh.net', mode: 'classic', dumps: [['daily.1', 0.4, 0.6], ['weekly.1', 3, 4]] },
+    ],
+    crons: [
+      { command: 'www/wp-cron.php', frequency: '0 * * * *', language: 'php8.3', email: '', description: 'Tâches WordPress' },
+      { command: 'boutique/bin/sync-stock.php', frequency: '0 3 * * *', language: 'php7.4', email: 'camille@atelier-martin.fr', description: 'Synchronisation du stock' },
+    ],
+    env: [{ key: 'APP_ENV', type: 'string' }, { key: 'STRIPE_SECRET_KEY', type: 'password' }],
+    tasks: [
+      { function: 'database/dump', objectId: 'atelierzzmain.mysql.db', status: 'done', created: '21 sept. 2026, 03:00', done: '21 sept. 2026, 03:02' },
+      { function: 'attachedDomain/create', objectId: 'boutique.atelier-martin.fr', status: 'done', created: '11 sept. 2026, 15:20', done: '11 sept. 2026, 15:24' },
+    ] },
+  'cmartinv.cluster028.hosting.ovh.net': {
+    displayName: null, offer: 'start1m', state: 'active', primaryLogin: 'cmartinv', home: '/homez.028/cmartinv', defaultAttachedDomain: 'cmartin.eu', expiration: '2 déc. 2026',
+    quotaSize: { unit: 'GB', value: 1 }, quotaUsed: { unit: 'MB', value: 912 }, trafficQuotaSize: { unit: 'TB', value: 1 }, trafficQuotaUsed: { unit: 'GB', value: 214 },
+    cluster: 'cluster028', filer: '028', datacenter: 'p19', hostingIp: '213.186.33.19', hostingIpv6: null, operatingSystem: 'linux',
+    phpVersions: [{ version: '8.3', support: 'supported' }, { version: '7.4', support: 'deprecated' }],
+    hasCdn: false, hasHostedSsl: false, sshAllowed: false, recommendedOffer: 'perso2014', dbMax: 1,
+    attached: [{ domain: 'cmartin.eu', path: 'www', ssl: false, runtimeId: 1, firewall: 'none', cdn: 'none', ownLog: null, ipLocation: 'FR' }],
+    runtimes: [{ id: 1, name: 'Par défaut', type: 'phpfpm-7.4', publicDir: null, appEnv: 'production', isDefault: true, isDeletable: false }],
+    users: [{ login: 'cmartinv', home: '/', state: 'rw', sshState: 'none', isPrimaryAccount: true, pwDate: '8 févr. 2019, 21:03' }],
+    databases: [{ name: 'cmartinvblog.mysql.db', type: 'mysql', version: '5.6', versionSupport: 'deprecated', state: 'ok', status: 'created', quotaSize: { unit: 'MB', value: 25 }, quotaUsed: { unit: 'KB', value: 18842 }, server: 'cmartinvblog.mysql.db', port: 3306, user: 'cmartinvblog', guiURL: 'https://phpmyadmin.hosting.ovh.net', mode: 'classic', dumps: [['daily.1', 0.2, 0.8]] }],
+    crons: [], env: [],
+    tasks: [{ function: 'user/changePassword', objectId: 'cmartinv', status: 'done', created: '8 févr. 2019, 21:03', done: '8 févr. 2019, 21:04' }] },
+};
+
 class Component extends DCLogic {
-  state = { screen: 'login', loggingIn: false, section: null, sel: {}, dm: {}, tab: 'zone', editing: null, nsEdit: null, zf: { type: '', q: '' }, dynF: { suffix: '', sub: '', pass: '' }, dynReveal: null, dynPw: null, glueF: { host: '', ips: '' }, ctEdit: null, toast: null };
+  state = { screen: 'login', loggingIn: false, section: null, sel: {}, dm: {}, tab: 'zone', hm: {}, htab: 'sites', msF: null, msDel: null, uF: { suffix: '', home: '', ssh: 'sftponly', pass: '' }, uPw: null, hReveal: null, dbOpen: {}, dbRestore: null, envF: { key: '', type: 'string', value: '' }, envEdit: null, cronF: { command: '', frequency: '', language: '', email: '', description: '' }, adding: null, editing: null, nsEdit: null, zf: { type: '', q: '' }, dynF: { suffix: '', sub: '', pass: '' }, dynReveal: null, dynPw: null, glueF: { host: '', ips: '' }, ctEdit: null, toast: null };
   _timers = [];
   _uid = 0;
   uid(p) { this._uid += 1; return p + this._uid; }
@@ -908,10 +1540,10 @@ class Component extends DCLogic {
         let draft = y.draft;
         if (e.isNew || retype) draft = [...draft.filter(r => !(retype && r.id === e.id)), { ...rec, id: this.uid('r') }];
         else draft = draft.map(r => r.id === e.id ? { ...rec, id: e.id } : r);
-        return { ...y, draft };
+        return { ...y, draft, pub: draft };
       });
       this.setState({ editing: null });
-      this.showToast(retype ? `${e.orig} remplacé par ${t} dans le brouillon` : e.isNew ? `${t} ajouté au brouillon` : `${t} modifié dans le brouillon`);
+      this.showToast(retype ? `${e.orig} remplacé par ${t}` : e.isNew ? `Enregistrement ${t} ajouté` : `Enregistrement ${t} modifié`);
     };
     const onKey = e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel(); };
     const editRow = d => {
@@ -928,10 +1560,17 @@ class Component extends DCLogic {
     };
     const shown = all.filter(a => (!zf.type || a.r.type === zf.type) && (!q || (a.r.sub || '@').toLowerCase().includes(q) || a.r.target.toLowerCase().includes(q)));
     const BADGE = { new: ['Nouveau', 'tag-accent'], mod: ['Modifié', 'tag-outline'], del: ['Supprimé', 'tag-neutral'], dyn: ['DynHost', 'tag-neutral'] };
+    const prof = PROFILES[this.props.profile ?? 'Complet'] || PROFILES['Complet'];
+    const hostBy = {};
+    DATA.hosting.items.slice(0, prof.hosting).forEach(i => { const hs = HOSTS[i.id]; if (!hs) return; [hs.hostingIp, hs.hostingIpv6, i.id].filter(Boolean).forEach(k => { hostBy[k.toLowerCase()] = i.id; }); });
     const rows = shown.map(({ r, st, p }) => {
       if (ed && !ed.isNew && ed.id === r.id) return editRow(ed.d);
       const b = BADGE[st];
+      const hid = hostBy[r.target.toLowerCase().replace(/\.$/, '')];
+      const hs = hid && (this.state.hm[hid] || HOSTS[hid]);
       return {
+        hosted: !!hid, hostTitle: hid ? `Ouvrir l’hébergement ${hs.displayName || hid}` : '',
+        goHost: () => { if (hid) this.setState(s => ({ section: 'hosting', sel: { ...s.sel, hosting: hid }, htab: 'sites', msF: null, msDel: null, adding: null })); },
         editing: false, changing: false, hasErr: false, viewing: true,
         subLabel: r.sub || '@', type: r.type, via: r.via || '', hasVia: !!r.via, target: r.target,
         ttlLabel: r.ttl ? fmtDur(r.ttl) : `zone · ${fmtDur(x.zoneTtl)}`, ttlColor: r.ttl ? 'var(--color-neutral-200)' : 'var(--color-neutral-400)',
@@ -940,13 +1579,14 @@ class Component extends DCLogic {
         isDyn: st === 'dyn', canEdit: st === '' || st === 'new' || st === 'mod', canRestore: st === 'del' || st === 'mod',
         restoreTitle: st === 'del' ? 'Rétablir' : 'Revenir à la version publiée',
         edit: () => this.setState({ editing: { dom, id: r.id, isNew: false, changing: false, orig: r.via || r.type, d: { sub: r.sub, type: r.via || r.type, ttl: r.ttl ? String(r.ttl) : '', target: r.target } } }),
-        del: () => this.upd(dom, y => ({ ...y, draft: y.draft.filter(z => z.id !== r.id) })),
+        del: () => { const before = x.draft; this.upd(dom, y => { const d2 = y.draft.filter(z => z.id !== r.id); return { ...y, draft: d2, pub: d2 }; });
+          this.showToast(`Enregistrement ${r.type} supprimé`, () => { this.upd(dom, y => ({ ...y, draft: before, pub: before })); this.setState({ toast: null }); }); },
         restore: () => this.upd(dom, y => ({ ...y, draft: st === 'del' ? [...y.draft, p] : y.draft.map(z => z.id === r.id ? p : z) })),
       };
     });
-    if (ed && ed.isNew) rows.push(editRow(ed.d));
+    const nf = ed && ed.isNew ? editRow(ed.d) : { d: {}, typeOpts: [] };
     return {
-      q: zf.q, onQ: e => setZf({ q: e.target.value }), chips, rows, empty: rows.length === 0,
+      q: zf.q, onQ: e => setZf({ q: e.target.value }), chips, rows, nf, adding: !!(ed && ed.isNew), empty: rows.length === 0,
       hasPending: pending > 0, deploying: !pending && deploying, upToDate: !pending && !deploying,
       pendingLabel: `${pending} modification${pending > 1 ? 's' : ''} non publiée${pending > 1 ? 's' : ''}`,
       pendingCount: pending,
@@ -1001,7 +1641,7 @@ class Component extends DCLogic {
         if (invalid) return;
         const login = `${dom}-${suffix}`, sub = f.sub.trim() || '*';
         this.upd(dom, y => ({ ...y, dynLogins: [...y.dynLogins, { login, sub, pwDate: now() }] }));
-        this.setState({ dynReveal: { dom, login, sub, pass: f.pass, isNew: true } });
+        this.setState({ adding: null, dynReveal: { dom, login, sub, pass: f.pass, isNew: true } });
         setF({ suffix: '', sub: '', pass: '' });
       },
     };
@@ -1089,6 +1729,7 @@ class Component extends DCLogic {
         this.upd(dom, y => ({ ...y, glue: [...y.glue, { id, host, ips, state: 'adding' }] }));
         this.task(dom, `Création du glue record ${host}`, y => ({ ...y, glue: y.glue.map(z => z.id === id ? { ...z, state: null } : z) }));
         setF({ host: '', ips: '' });
+        this.setState({ adding: null });
       },
     };
   }
@@ -1146,6 +1787,356 @@ class Component extends DCLogic {
     };
   }
 
+  seedH(id) {
+    const s = HOSTS[id], t0 = Date.now();
+    return { ...s, attached: s.attached.map(a => ({ ...a })), runtimes: s.runtimes.map(r => ({ ...r })), users: s.users.map(u => ({ ...u })),
+      databases: s.databases.map(b => ({ ...b, dumps: b.dumps.map(([type, age, rem], i) => ({ id: b.name + i, type, created: t0 - age * dayMs, deletion: t0 + rem * dayMs })) })),
+      crons: s.crons.map((c, i) => ({ ...c, id: 'c' + i })), env: s.env.map(v => ({ ...v })), tasks: s.tasks.map((t, i) => ({ ...t, id: 'h' + i })) };
+  }
+  hostOf(id) { return this.state.hm[id] || this.seedH(id); }
+  updH(id, fn) { this.setState(s => ({ hm: { ...s.hm, [id]: fn(s.hm[id] || this.seedH(id)) } })); }
+  htask(hid, fn, objectId, onDone, ms = 2600) {
+    const id = this.uid('ht');
+    this.updH(hid, x => ({ ...x, tasks: [{ id, function: fn, objectId, status: 'doing', created: now(), createdTs: Date.now() }, ...x.tasks] }));
+    this.later(ms, () => this.updH(hid, x => { const y = onDone ? onDone(x) : x; return { ...y, tasks: y.tasks.map(t => t.id === id ? { ...t, status: 'done', done: now(), doneTs: Date.now() } : t) }; }));
+  }
+
+  hostingVals(hid, h) {
+    const muted = 'var(--color-neutral-400)', norm = 'var(--color-text)', warnC = DANGER[1];
+    const copy = (v, what) => () => { try { navigator.clipboard.writeText(v); } catch (e) {} this.showToast(`${what} copié`); };
+    const go = t => () => this.setState({ htab: t });
+    const isDep = t => { if (!/php|^\d/.test(t || '')) return false; const p = h.phpVersions.find(x => x.version === verOf(t)); return !!p && p.support === 'deprecated'; };
+    const rt = id => h.runtimes.find(r => r.id === +id) || h.runtimes[0];
+    const defRt = h.runtimes.find(r => r.isDefault) || h.runtimes[0];
+    const ctx = { copy, isDep, rt, defRt };
+    const [stLabel, tone] = H_STATE[h.state] || [h.state, 'neutral'];
+    const stC = { ok: ['var(--color-success-800)', 'var(--color-success-200)'], neutral: ['var(--color-neutral-800)', 'var(--color-neutral-200)'], warn: DANGER, bad: DANGER }[tone];
+    const du = toB(h.quotaUsed) || 0, ds = toB(h.quotaSize), dp = ds ? Math.min(100, du / ds * 100) : 0;
+    const tu = toB(h.trafficQuotaUsed) || 0, ts = toB(h.trafficQuotaSize), tp = ts ? Math.min(100, tu / ts * 100) : 0;
+    const barC = p => p >= 85 ? warnC : 'var(--color-accent)';
+    const pct = p => `${Math.round(p)} %`;
+    const running = h.tasks.filter(t => ['init', 'todo', 'doing'].includes(t.status)).length;
+    const cards = [
+      { k: 'Espace disque', v: `${fmtB(du)} sur ${fmtB(ds)}`, hasBar: true, pct: dp + '%', barColor: barC(dp), hasSub: true, sub: `${pct(dp)} utilisé`, color: dp >= 85 ? warnC : norm },
+      ts ? { k: 'Trafic du mois', v: `${fmtB(tu)} sur ${fmtB(ts)}`, hasBar: true, pct: tp + '%', barColor: barC(tp), hasSub: true, sub: `${pct(tp)} consommé` }
+        : { k: 'Trafic', v: 'Non mesuré', color: muted, hasSub: true, sub: 'Pas de quota de trafic sur cette offre' },
+      { k: 'Exécution par défaut', v: rtLabel(defRt.type), color: isDep(defRt.type) ? warnC : norm, hasSub: isDep(defRt.type), sub: 'Version plus maintenue', go: go('exec') },
+      { k: 'Multisites', v: String(h.attached.length), hasSub: !!h.defaultAttachedDomain, sub: `Principal : ${h.defaultAttachedDomain}`, go: go('sites') },
+      { k: 'Bases de données', v: `${h.databases.length} sur ${h.dbMax}`, go: go('db') },
+      { k: 'Expiration', v: h.expiration },
+    ].map(c => ({ hasBar: false, pct: '0%', barColor: '', hasSub: false, sub: '', color: norm, ...c, go: c.go || (() => {}), cursor: c.go ? 'pointer' : 'default' }));
+
+    const alerts = [];
+    if (tone === 'warn' || tone === 'bad') alerts.push({ icon: 'ph-lock-simple', color: warnC, text: `Hébergement ${stLabel.toLowerCase()}`, detail: 'Les sites ne sont plus servis. Le support OVHcloud peut en donner la raison.' });
+    if (h.state === 'maintenance') alerts.push({ icon: 'ph-wrench', color: 'var(--color-accent-300)', text: 'Maintenance en cours sur le cluster', detail: 'Les sites peuvent répondre plus lentement.' });
+    h.databases.filter(b => b.versionSupport === 'deprecated' || b.databaseServiceDeprecated).forEach(b => alerts.push({ icon: 'ph-warning', color: warnC, text: `${b.name} tourne sur ${ENG[b.type] || b.type} ${b.version}, version dépréciée`, detail: 'Elle ne reçoit plus de correctifs de sécurité.', cta: 'Voir la base', go: go('db') }));
+    h.runtimes.filter(r => isDep(r.type)).forEach(r => { const used = h.attached.filter(a => a.runtimeId === r.id).map(a => a.domain);
+      alerts.push({ icon: 'ph-warning', color: warnC, text: `${rtLabel(r.type)} n’est plus maintenu`, detail: used.length ? `Configuration « ${r.name} », sert ${used.join(', ')}.` : `Configuration « ${r.name} », utilisée par aucun multisite.`, cta: 'Voir l’exécution', go: go('exec') }); });
+    const depCron = h.crons.filter(c => isDep(c.language));
+    if (depCron.length) alerts.push({ icon: 'ph-warning', color: warnC, text: `${depCron.length} tâche${depCron.length > 1 ? 's' : ''} planifiée${depCron.length > 1 ? 's' : ''} sur une version de PHP plus maintenue`, detail: depCron.map(c => c.description || c.command).join(', '), cta: 'Voir les tâches', go: go('cron') });
+    if (dp >= 85) alerts.push({ icon: 'ph-hard-drive', color: warnC, text: `Espace disque occupé à ${pct(dp)}`, detail: `${fmtB(ds - du)} disponibles. Les bases de données ont leur propre quota.` });
+    if (h.recommendedOffer && h.recommendedOffer !== h.offer) alerts.push({ icon: 'ph-lightbulb', color: 'var(--color-accent-300)', text: `OVHcloud suggère l’offre ${h.recommendedOffer}`, detail: `Recommandation renvoyée par l’API pour remplacer ${h.offer}.` });
+
+    const ftp = `ftp.${h.cluster}.hosting.ovh.net`;
+    const ips = [['IPv4', h.hostingIp], ['IPv6', h.hostingIpv6], ['FTP', ftp]].filter(x => x[1]).map(([label, v]) => ({ label, v, copy: copy(v, label === 'FTP' ? 'Serveur FTP' : 'Adresse') }));
+    const tab = this.state.htab;
+    const mk = (k, label, n = 0) => ({ label, n, hasN: n > 0, on: tab === k, pick: () => this.setState({ htab: k }), line: tab === k ? 'var(--color-accent)' : 'transparent', color: tab === k ? 'var(--color-text)' : 'var(--color-neutral-300)' });
+    const rv = this.state.hReveal && this.state.hReveal.hid === hid ? this.state.hReveal : null;
+    return {
+      hv: { title: h.displayName || h.offer, serviceName: hid, offer: h.offer, stLabel, stBg: stC[0], stColor: stC[1],
+        infra: `${h.cluster} · filer ${h.filer} · ${h.datacenter.toUpperCase()} · ${h.operatingSystem === 'windows' ? 'Windows' : 'Linux'}`,
+        cards, alerts: alerts.map(a => ({ cta: '', go: () => {}, ...a, hasCta: !!a.cta, cursor: a.cta ? 'pointer' : 'default', color: a.color === warnC ? 'var(--color-danger-200)' : 'var(--color-neutral-200)' })), hasAlerts: alerts.length > 0, ips,
+        hasActivity: running > 0, activityLabel: `${running} opération${running > 1 ? 's' : ''} en cours`, goOps: go('ops') },
+      htabs: [mk('sites', 'Multisites'), mk('users', 'FTP & SSH'), mk('db', 'Bases de données'), mk('exec', 'Exécution'), mk('cron', 'Tâches planifiées'), mk('ops', 'Opérations', running)],
+      ht: { sites: tab === 'sites', users: tab === 'users', db: tab === 'db', exec: tab === 'exec', cron: tab === 'cron', ops: tab === 'ops' },
+      ms: this.msVals(hid, h, ctx), us: this.usVals(hid, h, ctx), db: this.dbVals(hid, h, ctx), rtv: this.rtVals(hid, h, ctx), ev: this.evVals(hid, h), cr: this.crVals(hid, h, ctx), hops: this.hopsVals(h),
+      rv: rv ? { show: true, title: rv.title, rows: rv.rows.map(([k, v, cp]) => ({ k, v, copy: copy(cp || v, k) })), dismiss: () => this.setState({ hReveal: null }) } : { show: false, rows: [] },
+    };
+  }
+
+  msVals(hid, h, c) {
+    const f = this.state.msF && this.state.msF.hid === hid ? this.state.msF : null;
+    const delD = this.state.msDel && this.state.msDel.hid === hid ? this.state.msDel.domain : null;
+    const muted = 'var(--color-neutral-400)';
+    const ipFor = loc => !loc || loc === 'FR' ? h.hostingIp : '213.186.33.' + (100 + COUNTRIES.findIndex(x => x[0] === loc));
+    const v6For = loc => !loc || loc === 'FR' ? h.hostingIpv6 : null;
+    const cname = k => (COUNTRIES.find(x => x[0] === k) || [k, k])[1];
+    const dnsOf = a => {
+      const z = zoneOf(a.domain);
+      if (!z) return ['Zone hors compte', muted, 'var(--color-neutral-500)', 'Le DNS de ce domaine est géré ailleurs.'];
+      const recs = this.dom(z.zone).pub;
+      let as = recs.filter(r => r.sub === z.sub && r.type === 'A'), via = '';
+      if (!as.length) { const cn = recs.find(r => r.sub === z.sub && r.type === 'CNAME'); const z2 = cn && zoneOf(cn.target.replace(/\.$/, '')); if (z2 && z2.zone === z.zone) { as = recs.filter(r => r.sub === z2.sub && r.type === 'A'); via = ` via ${cn.target}`; } }
+      if (!as.length) return ['Aucune adresse', DANGER[1], DANGER[1], `Aucun enregistrement A pour ${a.domain} dans la zone ${z.zone}.`];
+      const want = ipFor(a.ipLocation);
+      return as.some(r => r.target === want) ? ['Pointe ici', 'var(--color-neutral-200)', 'var(--color-success)', `A ${want}${via}`]
+        : [`Pointe vers ${as[0].target}`, DANGER[1], DANGER[1], `L’hébergement sert ${want}, la zone ${z.zone} renvoie ailleurs${via}.`];
+    };
+    const P = { adding: 'Ajout…', deleting: 'Détachement…', updating: 'Mise à jour…' };
+    const rows = h.attached.map(a => {
+      const [dns, dnsColor, dnsDot, dnsTitle] = dnsOf(a);
+      const r = c.rt(a.runtimeId), isMain = a.domain === h.defaultAttachedDomain;
+      const prof = PROFILES[this.props.profile ?? 'Complet'] || PROFILES['Complet'];
+      const zo = zoneOf(a.domain), owned = !!zo && DATA.domains.items.slice(0, prof.domains).some(i => i.id === zo.zone);
+      return { domain: a.domain, isMain, owned, goTitle: owned ? `Ouvrir ${zo.zone} dans Domaines` : '',
+        goDomain: () => { if (owned) this.setState(s => ({ section: 'domains', sel: { ...s.sel, domains: zo.zone }, tab: 'zone', editing: null, nsEdit: null, ctEdit: null, adding: null })); },
+        path: '/' + (a.path || ''), rt: rtLabel(r.type), rtWarn: c.isDep(r.type), dns, dnsColor, dnsDot, dnsTitle,
+        ssl: a.ssl ? 'Actif' : '—', fw: a.firewall === 'active' ? 'Actif' : '—', cdn: a.cdn === 'active' ? 'Actif' : '—', loc: cname(a.ipLocation || 'FR'),
+        idle: !a.state, pending: !!a.state, pendingLabel: P[a.state] || '', opacity: a.state === 'deleting' ? 0.5 : 1,
+        cantDel: isMain, delTitle: isMain ? 'Le domaine principal ne se détache pas' : 'Détacher', confirmDel: delD === a.domain && !a.state,
+        edit: () => this.setState({ msDel: null, msF: { hid, mode: 'edit', step: 'edit', orig: a.domain, origLoc: a.ipLocation || 'FR', d: { domain: a.domain, path: a.path || '', runtimeId: a.runtimeId, ipLocation: a.ipLocation || 'FR', ownLog: a.ownLog || '', ssl: !!a.ssl, firewall: a.firewall === 'active', cdn: a.cdn === 'active', bypass: false } } }),
+        del: () => { if (!isMain) this.setState({ msDel: { hid, domain: a.domain } }); },
+        delCancel: () => this.setState({ msDel: null }),
+        delApply: () => { this.setState({ msDel: null }); this.updH(hid, y => ({ ...y, attached: y.attached.map(z => z.domain === a.domain ? { ...z, state: 'deleting' } : z) })); this.htask(hid, 'attachedDomain/delete', a.domain, y => ({ ...y, attached: y.attached.filter(z => z.domain !== a.domain) })); this.showToast(`Détachement de ${a.domain} lancé`); },
+      };
+    });
+    let fv = {};
+    if (f) {
+      const d = f.d;
+      const set = p => this.setState(s => ({ msF: { ...s.msF, d: { ...s.msF.d, ...p } } }));
+      const val = k => e => set({ [k]: e.target.value });
+      const dn = d.domain.trim().toLowerCase().replace(/\.$/, '');
+      const path = d.path.trim().replace(/^\/+|\/+$/g, '');
+      const ownLog = d.ownLog.trim().toLowerCase();
+      let err = '';
+      if (dn && !HOST_RE.test(dn)) err = 'Nom de domaine invalide.';
+      else if (f.mode === 'new' && h.attached.some(a => a.domain === dn)) err = 'Ce domaine est déjà attaché à l’hébergement.';
+      else if (path && /(^|\/)\.\.(\/|$)/.test(path)) err = 'Le dossier doit rester à l’intérieur de l’hébergement.';
+      else if (path && !/^[A-Za-z0-9._\-\/]+$/.test(path)) err = 'Dossier : lettres, chiffres, points, tirets et / uniquement.';
+      else if (ownLog && !HOST_RE.test(ownLog)) err = 'Domaine des logs invalide.';
+      const incomplete = !dn || !path;
+      const z = dn ? zoneOf(dn) : null;
+      const needDns = f.mode === 'new' || d.ipLocation !== f.origLoc;
+      const newIp = ipFor(d.ipLocation), newV6 = v6For(d.ipLocation);
+      const wanted = [{ type: 'A', target: newIp }, ...(newV6 ? [{ type: 'AAAA', target: newV6 }] : [])];
+      const subL = z ? (z.sub || '@') : dn;
+      const mode = !needDns ? 'none' : d.bypass ? 'manual' : !z ? 'blocked' : 'write';
+      const old = mode === 'write' ? this.dom(z.zone).pub.filter(r => r.sub === z.sub && ['A', 'AAAA', 'CNAME'].includes(r.type)) : [];
+      const L = (sign, color, deco, type, target, cp) => ({ sign, color, deco, sub: subL, type, target, hasCopy: !!cp, copy: cp ? c.copy(target, 'Adresse') : () => {} });
+      const lines = mode === 'write'
+        ? [...old.map(r => wanted.some(w => w.type === r.type && w.target === r.target) ? L('', 'var(--color-neutral-200)', 'none', r.type, r.target) : L('−', muted, 'line-through', r.type, r.target)),
+           ...wanted.filter(w => !old.some(r => r.type === w.type && r.target === w.target)).map(w => L('+', 'var(--color-accent-300)', 'none', w.type, w.target))]
+        : mode === 'manual' ? wanted.map(w => L('', 'var(--color-neutral-200)', 'none', w.type, w.target, true)) : [];
+      const DNS = {
+        none: ['ph-check-circle', 'var(--color-neutral-200)', 'La zone DNS n’est pas modifiée', ''],
+        manual: ['ph-hand-pointing', 'var(--color-neutral-200)', 'Aucune écriture dans la zone DNS', 'Pour que le site réponde, le domaine doit pointer vers ces adresses, là où son DNS est géré :'],
+        blocked: ['ph-prohibit', DANGER[1], `Le DNS de ${dn} n’est pas géré dans ce compte`, 'L’API ne peut pas écrire dans cette zone. Revenez en arrière et cochez « Ne pas modifier la zone DNS ».'],
+        write: ['ph-warning', 'var(--color-accent-300)', `La zone ${z ? z.zone : ''} sera modifiée`, 'Ces changements apparaîtront dans Domaines › Zone DNS, avec une opération dans son journal.'],
+      }[mode];
+      const dnsHelp = d.bypass ? 'Vous créerez vous-même les enregistrements A et AAAA, où que soit géré le DNS.'
+        : z ? `L’API écrira dans la zone ${z.zone} de ce compte : les enregistrements A, AAAA ou CNAME de ${subL} seront remplacés.`
+        : dn && !err ? `${dn} n’est pas dans ce compte. Cochez cette case : l’API ne pourra pas configurer son DNS.`
+        : 'Sans cette case, l’API modifie elle-même la zone DNS du domaine.';
+      const rtm = c.rt(d.runtimeId);
+      const apply = () => {
+        if (mode === 'blocked') return;
+        const rec = { domain: f.mode === 'edit' ? f.orig : dn, path, runtimeId: +d.runtimeId, ipLocation: d.ipLocation, ownLog: ownLog || null, ssl: d.ssl, firewall: d.firewall ? 'active' : 'none', cdn: d.cdn && h.hasCdn ? 'active' : 'none' };
+        this.setState({ msF: null });
+        if (f.mode === 'new') { this.updH(hid, y => ({ ...y, attached: [...y.attached, { ...rec, state: 'adding' }] })); this.htask(hid, 'attachedDomain/create', dn, y => ({ ...y, attached: y.attached.map(a => a.domain === dn ? { ...a, state: null } : a) })); }
+        else { this.updH(hid, y => ({ ...y, attached: y.attached.map(a => a.domain === f.orig ? { ...a, state: 'updating' } : a) })); this.htask(hid, 'attachedDomain/update', f.orig, y => ({ ...y, attached: y.attached.map(a => a.domain === f.orig ? rec : a) })); }
+        if (mode === 'write') {
+          const zz = z.zone, sub = z.sub;
+          this.task(zz, `Zone modifiée par l’hébergement · ${dn}`, y => { const keep = y.pub.filter(r => !(r.sub === sub && ['A', 'AAAA', 'CNAME'].includes(r.type))); const recs = [...keep, ...wanted.map(w => ({ id: this.uid('r'), sub, type: w.type, ttl: null, target: w.target, via: null }))]; return { ...y, pub: recs, draft: recs }; }, 3000);
+          this.showToast(`Envoyé · la zone ${zz} va être mise à jour`);
+        } else this.showToast(f.mode === 'new' ? `Ajout de ${dn} lancé` : `Modification de ${dn} lancée`);
+      };
+      const opt = (k, label, note, disabled) => ({ label, note, ...SW(!!d[k] && !disabled, disabled), toggle: () => { if (!disabled) set({ [k]: !this.state.msF.d[k] }); } });
+      fv = {
+        title: f.mode === 'new' ? 'Nouveau multisite' : `Modifier ${f.orig}`,
+        editing: f.step === 'edit', confirming: f.step === 'confirm', d, home: h.home, lockDomain: f.mode === 'edit',
+        onDomain: val('domain'), onPath: val('path'), onRuntime: val('runtimeId'), onLoc: val('ipLocation'), onOwnLog: val('ownLog'),
+        onBypass: e => set({ bypass: e.target.checked }),
+        runtimes: h.runtimes.map(r => ({ v: String(r.id), sel: r.id === +d.runtimeId, label: `${r.name} · ${rtLabel(r.type)}${c.isDep(r.type) ? ' (plus maintenu)' : ''}` })),
+        locs: COUNTRIES.map(([v, label]) => ({ v, sel: v === d.ipLocation, label: v === 'FR' ? `${label} · IP principale` : label })),
+        opts: [opt('ssl', 'SSL', 'Ajouté au certificat', false), opt('firewall', 'Pare-feu', 'Filtrage applicatif', false), opt('cdn', 'CDN', h.hasCdn ? 'Inclus dans l’offre' : 'Non inclus dans l’offre', !h.hasCdn)],
+        dnsHelp, hasErr: !!err, err, invalid: incomplete || !!err,
+        review: () => { if (!incomplete && !err) this.setState(s => ({ msF: { ...s.msF, step: 'confirm' } })); },
+        cancel: () => this.setState({ msF: null }),
+        back: () => this.setState(s => ({ msF: { ...s.msF, step: 'edit' } })),
+        summary: [['Domaine', dn], ['Dossier servi', `${h.home}/${path}`], ['Exécution', `${rtm.name} · ${rtLabel(rtm.type)}`], ['Options', [d.ssl && 'SSL', d.firewall && 'pare-feu', d.cdn && h.hasCdn && 'CDN'].filter(Boolean).join(', ') || 'Aucune'], ['Localisation IP', `${cname(d.ipLocation)} · ${newIp}`], ['Logs', ownLog || 'Avec ceux de l’hébergement']].map(([k, v]) => ({ k, v })),
+        dnsIcon: DNS[0], dnsColor: DNS[1], dnsTitle: DNS[2], dnsText: DNS[3], hasDnsText: !!DNS[3], dnsLines: lines,
+        cantApply: mode === 'blocked', apply, applyLabel: f.mode === 'new' ? 'Ajouter le multisite' : 'Enregistrer',
+      };
+    }
+    const n = h.attached.length;
+    return { rows, formOpen: !!f, f: fv, countLabel: `${n} domaine${n > 1 ? 's' : ''} servi${n > 1 ? 's' : ''} par cet hébergement`,
+      add: () => this.setState({ msDel: null, msF: { hid, mode: 'new', step: 'edit', origLoc: null, d: { domain: '', path: '', runtimeId: c.defRt.id, ipLocation: 'FR', ownLog: '', ssl: true, firewall: false, cdn: false, bypass: false } } }) };
+  }
+
+  usVals(hid, h, c) {
+    const pw = this.state.uPw && this.state.uPw.hid === hid ? this.state.uPw : null;
+    const F = this.state.uF;
+    const setF = p => this.setState(s => ({ uF: { ...s.uF, ...p } }));
+    const ftp = `ftp.${h.cluster}.hosting.ovh.net`, sshH = `ssh.${h.cluster}.hosting.ovh.net`;
+    const sshOk = h.sshAllowed !== false;
+    const reveal = (title, u, pass) => this.setState({ hReveal: { hid, title, rows: [['Serveur FTP', `${ftp} · port 21`, ftp], ...(sshOk && u.sshState !== 'none' ? [['Serveur SSH', `${sshH} · port 22`, sshH]] : []), ['Identifiant', u.login], ['Mot de passe', pass]] } });
+    const setU = (login, p) => this.updH(hid, y => ({ ...y, users: y.users.map(z => z.login === login ? { ...z, ...p } : z) }));
+    const done = (login, p) => y => ({ ...y, users: y.users.map(z => z.login === login ? { ...z, busy: null, ...p } : z) });
+    const SSH = [['active', 'SSH', 'Shell complet et SFTP'], ['sftponly', 'SFTP', 'Transfert chiffré, sans shell'], ['none', 'Aucun', 'FTP uniquement']];
+    const rows = h.users.map(u => {
+      const busy = !!u.busy, open = !!pw && pw.login === u.login, v = open ? pw.v : '';
+      const save = () => { if (!pwOk(v)) return; this.setState({ uPw: null }); setU(u.login, { busy: 'Changement du mot de passe…' }); this.htask(hid, 'user/changePassword', u.login, done(u.login, { pwDate: now() })); reveal(`Nouveau mot de passe pour ${u.login}`, u, v); };
+      return {
+        login: u.login, home: u.home, isPrimary: !!u.isPrimaryAccount, pwInfo: `mot de passe défini le ${u.pwDate}`,
+        opacity: u.busy === 'Suppression…' ? 0.5 : 1, idle: !busy, pending: busy, pendingLabel: u.busy || '',
+        acc: { ...SW(u.state === 'rw', busy, busy), toggle: () => { if (busy) return; const on = u.state !== 'rw'; setU(u.login, { busy: on ? 'Ouverture…' : 'Fermeture…' }); this.htask(hid, 'user/update', u.login, done(u.login, { state: on ? 'rw' : 'off' })); } },
+        accLabel: u.state === 'rw' ? 'Ouvert' : 'Fermé',
+        ssh: SSH.map(([k, label, title]) => ({ label, title: sshOk ? title : 'SSH non inclus dans l’offre', disabled: busy || !sshOk, ...SEG(u.sshState === k),
+          pick: () => { if (u.sshState === k || busy || !sshOk) return; setU(u.login, { busy: 'Mise à jour de l’accès…' }); this.htask(hid, 'user/update', u.login, done(u.login, { sshState: k })); } })),
+        sshOpacity: sshOk && u.state === 'rw' ? 1 : 0.45,
+        cantDel: !!u.isPrimaryAccount, delTitle: u.isPrimaryAccount ? 'Le compte principal ne se supprime pas' : 'Supprimer',
+        del: () => { if (u.isPrimaryAccount) return; setU(u.login, { busy: 'Suppression…' }); this.htask(hid, 'user/delete', u.login, y => ({ ...y, users: y.users.filter(z => z.login !== u.login) })); },
+        pwOpen: open, pw: v, pwInvalid: !pwOk(v),
+        pwEdit: () => this.setState({ uPw: { hid, login: u.login, v: '' } }), pwCancel: () => this.setState({ uPw: null }),
+        onPw: e => { const nv = e.target.value; this.setState(s => ({ uPw: { ...s.uPw, v: nv } })); },
+        onPwKey: e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') this.setState({ uPw: null }); },
+        gen: () => this.setState(s => ({ uPw: { ...s.uPw, v: genPw() } })), pwSave: save,
+      };
+    });
+    const suffix = F.suffix.trim().toLowerCase(), home = F.home.trim() || '/', login = `${h.primaryLogin}-${suffix}`;
+    let err = '';
+    if (suffix && !/^[a-z0-9]+$/.test(suffix)) err = 'Suffixe : lettres minuscules et chiffres uniquement.';
+    else if (suffix && h.users.some(u => u.login === login)) err = 'Cet identifiant existe déjà.';
+    else if (!home.startsWith('/') || /(^|\/)\.\.(\/|$)/.test(home)) err = 'Le dossier commence par / et reste dans l’hébergement.';
+    else if (F.pass && !pwOk(F.pass)) err = 'Mot de passe : 9 à 30 caractères, avec une majuscule, une minuscule et un chiffre.';
+    const invalid = !suffix || !F.pass || !!err;
+    const ssh = sshOk ? F.ssh : 'none';
+    return {
+      rows, prefix: h.primaryLogin + '-', suffix: F.suffix, home: F.home, pass: F.pass,
+      sshOpts: [['active', 'SSH complet'], ['sftponly', 'SFTP seul'], ['none', 'Sans SSH']].map(([v, label]) => ({ v, label, sel: ssh === v })), sshDisabled: !sshOk,
+      onSuffix: e => setF({ suffix: e.target.value }), onHome: e => setF({ home: e.target.value }), onPass: e => setF({ pass: e.target.value }), onSsh: e => setF({ ssh: e.target.value }),
+      gen: () => setF({ pass: genPw() }), hasErr: !!err, err, invalid,
+      note: sshOk ? `Identifiant complet : ${login.replace(/-$/, '-…')}. Le compte FTP et l’accès shell sont deux réglages distincts : un compte fermé n’a plus aucun accès.` : 'Cette offre ne comprend pas d’accès SSH : les comptes sont limités au FTP.',
+      create: () => {
+        if (invalid) return;
+        const u = { login, home, state: 'rw', sshState: ssh, isPrimaryAccount: false, pwDate: now(), busy: 'Création…' };
+        this.updH(hid, y => ({ ...y, users: [...y.users, u] }));
+        this.htask(hid, 'user/create', login, done(login, {}));
+        reveal(`Utilisateur ${login} créé`, u, F.pass);
+        this.setState({ adding: null });
+        setF({ suffix: '', home: '', pass: '' });
+      },
+    };
+  }
+
+  dbVals(hid, h, c) {
+    const rs = this.state.dbRestore && this.state.dbRestore.hid === hid ? this.state.dbRestore : null;
+    const setB = (name, p) => this.updH(hid, y => ({ ...y, databases: y.databases.map(b => b.name === name ? { ...b, ...p } : b) }));
+    const n = h.databases.length;
+    return {
+      countLabel: `${n} base${n > 1 ? 's' : ''} sur ${h.dbMax} incluse${h.dbMax > 1 ? 's' : ''} dans l’offre`, full: n >= h.dbMax,
+      create: () => this.showToast('Création de base non simulée dans ce prototype'),
+      rows: h.databases.map(b => {
+        const dep = b.versionSupport === 'deprecated' || !!b.databaseServiceDeprecated;
+        const qu = toB(b.quotaUsed) || 0, qs = toB(b.quotaSize), qp = qs ? Math.min(100, qu / qs * 100) : 0;
+        const busy = b.status !== 'created', open = !!this.state.dbOpen[hid + b.name], eng = ENG[b.type] || b.type;
+        const dbn = b.name.split('.')[0];
+        const conn = b.type === 'postgresql' ? `psql -h ${b.server} -p ${b.port} -U ${b.user} ${dbn}` : `mysql -h ${b.server} -P ${b.port} -u ${b.user} -p ${dbn}`;
+        const dumps = [...b.dumps].sort((a, z) => z.created - a.created).map(x => {
+          const left = x.deletion - Date.now();
+          const confirm = !!rs && rs.db === b.name && rs.id === x.id;
+          return { type: DUMP_L[x.type] || x.type, created: fmtDT(x.created),
+            left: left < dayMs ? `Supprimée automatiquement dans ${Math.max(1, Math.round(left / 3600000))} h` : `Supprimée automatiquement le ${fmtDay(x.deletion)} · dans ${Math.round(left / dayMs)} j`,
+            leftColor: left < 2 * dayMs ? DANGER[1] : 'var(--color-neutral-400)', idle: !confirm, confirm, cantRestore: busy,
+            ask: () => this.setState({ dbRestore: { hid, db: b.name, id: x.id } }), cancel: () => this.setState({ dbRestore: null }),
+            apply: () => { this.setState({ dbRestore: null }); setB(b.name, { status: 'restoring' }); this.htask(hid, 'database/restore', b.name, y => ({ ...y, databases: y.databases.map(z => z.name === b.name ? { ...z, status: 'created' } : z) }), 3400); this.showToast('Restauration lancée'); } };
+        });
+        return {
+          name: b.name, engine: `${eng} ${b.version}${dep ? ' · dépréciée' : ''}`, verBg: dep ? DANGER[0] : 'var(--color-neutral-800)', verColor: dep ? DANGER[1] : 'var(--color-neutral-200)', deprecated: dep,
+          depText: `${eng} ${b.version} est marquée dépréciée par l’API et ne reçoit plus de correctifs de sécurité. Pour migrer : sauvegardez cette base, créez-en une dans une version stable, puis importez-y la sauvegarde.`,
+          stateLabel: DB_STATE[b.state] || b.state, modeLabel: DB_MODE[b.mode] || b.mode,
+          quotaLabel: `${fmtB(qu)} sur ${fmtB(qs)}`, qpct: qp + '%', qColor: qp >= 85 ? DANGER[1] : 'var(--color-accent)',
+          busy, statusLabel: DB_STATUS[b.status] || b.status, gui: b.guiURL || '#',
+          copyConn: c.copy(conn, 'Commande de connexion'), dumpCount: b.dumps.length, open, caret: open ? 'ph-caret-up' : 'ph-caret-down',
+          toggle: () => this.setState(s => ({ dbOpen: { ...s.dbOpen, [hid + b.name]: !s.dbOpen[hid + b.name] } })),
+          dumps,
+          dumpNow: () => { if (busy) return; setB(b.name, { status: 'dumping' }); this.htask(hid, 'database/dump', b.name, y => ({ ...y, databases: y.databases.map(z => z.name === b.name ? { ...z, status: 'created', dumps: [...z.dumps, { id: this.uid('d'), type: 'now', created: Date.now(), deletion: Date.now() + 30 * dayMs }] } : z) }), 3000); this.showToast('Sauvegarde lancée'); },
+        };
+      }),
+    };
+  }
+
+  rtVals(hid, h, c) {
+    return { rows: h.runtimes.map(r => {
+      const used = h.attached.filter(a => a.runtimeId === r.id).map(a => a.domain);
+      return { name: r.name, isDefault: !!r.isDefault, lang: rtLabel(r.type), raw: r.type, warn: c.isDep(r.type), pub: r.publicDir ? '/' + r.publicDir : '—', env: r.appEnv || '—',
+        used: used.length ? used.join(', ') : 'Aucun', usedColor: used.length ? 'var(--color-neutral-200)' : 'var(--color-neutral-400)',
+        canDefault: !r.isDefault && !r.busy, pending: !!r.busy, pendingLabel: r.busy || '',
+        setDefault: () => { this.updH(hid, y => ({ ...y, runtimes: y.runtimes.map(z => z.id === r.id ? { ...z, busy: 'Mise à jour…' } : z) })); this.htask(hid, 'runtime/update', r.name, y => ({ ...y, runtimes: y.runtimes.map(z => ({ ...z, busy: null, isDefault: z.id === r.id })) })); } };
+    }) };
+  }
+
+  evVals(hid, h) {
+    const ee = this.state.envEdit && this.state.envEdit.hid === hid ? this.state.envEdit : null;
+    const F = this.state.envF;
+    const setF = p => this.setState(s => ({ envF: { ...s.envF, ...p } }));
+    const setV = (key, p) => this.updH(hid, y => ({ ...y, env: y.env.map(z => z.key === key ? { ...z, ...p } : z) }));
+    const intBad = (t, v) => t === 'integer' && !/^-?\d+$/.test(v);
+    const key = F.key.trim();
+    let err = '';
+    if (key && !/^[A-Z_][A-Z0-9_]*$/.test(key)) err = 'Nom : majuscules, chiffres et _, sans commencer par un chiffre.';
+    else if (h.env.some(v => v.key === key)) err = 'Cette variable existe déjà.';
+    else if (F.value && intBad(F.type, F.value)) err = 'Une variable integer attend un nombre entier.';
+    return {
+      rows: h.env.map(v => {
+        const editing = !!ee && ee.key === v.key, draft = editing ? ee.v : '', bad = !draft || intBad(v.type, draft);
+        const save = () => { if (bad) return; this.setState({ envEdit: null }); setV(v.key, { busy: 'Remplacement…' }); this.htask(hid, 'envVar/update', v.key, y => ({ ...y, env: y.env.map(z => z.key === v.key ? { ...z, busy: null } : z) })); this.showToast(`Valeur de ${v.key} remplacée`); };
+        return { key: v.key, type: v.type, idle: !v.busy && !editing, pending: !!v.busy, pendingLabel: v.busy || '', opacity: v.busy === 'Suppression…' ? 0.5 : 1,
+          editing, draft, invalid: bad, save,
+          edit: () => this.setState({ envEdit: { hid, key: v.key, v: '' } }), cancel: () => this.setState({ envEdit: null }),
+          onDraft: e => { const nv = e.target.value; this.setState(s => ({ envEdit: { ...s.envEdit, v: nv } })); },
+          onKey: e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') this.setState({ envEdit: null }); },
+          del: () => { setV(v.key, { busy: 'Suppression…' }); this.htask(hid, 'envVar/delete', v.key, y => ({ ...y, env: y.env.filter(z => z.key !== v.key) })); } };
+      }),
+      empty: !h.env.length, key: F.key, value: F.value, types: ['string', 'integer', 'password'].map(v => ({ v, sel: v === F.type })),
+      onKey: e => setF({ key: e.target.value.toUpperCase() }), onType: e => setF({ type: e.target.value }), onValue: e => setF({ value: e.target.value }),
+      hasErr: !!err, err, invalid: !key || !F.value || !!err,
+      add: () => { if (!key || !F.value || err) return; this.updH(hid, y => ({ ...y, env: [...y.env, { key, type: F.type, busy: 'Création…' }] })); this.htask(hid, 'envVar/create', key, y => ({ ...y, env: y.env.map(z => z.key === key ? { ...z, busy: null } : z) })); setF({ key: '', value: '' }); this.setState({ adding: null }); this.showToast(`Variable ${key} ajoutée`); },
+    };
+  }
+
+  crVals(hid, h, c) {
+    const F = this.state.cronF;
+    const setF = p => this.setState(s => ({ cronF: { ...s.cronF, ...p } }));
+    const best = h.phpVersions.find(p => p.support !== 'deprecated') || h.phpVersions[0];
+    const lang = F.language || `php${best.version}`;
+    const cmd = F.command.trim().replace(/^\/+/, '');
+    const fq = F.frequency.trim(), txt = fq ? cronText(fq) : null, email = F.email.trim();
+    let err = '';
+    if (cmd && /(^|\/)\.\.(\/|$)/.test(cmd)) err = 'Le script doit se trouver dans l’hébergement.';
+    else if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) err = 'Adresse e-mail invalide.';
+    return {
+      rows: h.crons.map(x => ({ command: x.command, desc: x.description || '', hasDesc: !!x.description, freqText: cronText(x.frequency) || 'Expression non reconnue', frequency: x.frequency,
+        lang: rtLabel(x.language), warn: c.isDep(x.language), email: x.email || '—', idle: !x.busy, pending: !!x.busy, pendingLabel: x.busy || '', opacity: x.busy === 'Suppression…' ? 0.5 : 1,
+        del: () => { this.updH(hid, y => ({ ...y, crons: y.crons.map(z => z.id === x.id ? { ...z, busy: 'Suppression…' } : z) })); this.htask(hid, 'cron/delete', x.command, y => ({ ...y, crons: y.crons.filter(z => z.id !== x.id) })); } })),
+      empty: !h.crons.length, home: h.home, command: F.command, frequency: F.frequency, description: F.description, email: F.email,
+      freqText: !fq ? 'minute · heure · jour du mois · mois · jour de semaine' : txt || 'Expression invalide : 5 champs attendus, par ex. 0 3 * * *',
+      freqColor: fq && !txt ? DANGER[1] : 'var(--color-neutral-400)',
+      langs: h.phpVersions.map(p => ({ v: `php${p.version}`, sel: `php${p.version}` === lang, label: `PHP ${p.version}${p.support === 'deprecated' ? ' (plus maintenu)' : ''}` })),
+      onCommand: e => setF({ command: e.target.value }), onFrequency: e => setF({ frequency: e.target.value }), onLanguage: e => setF({ language: e.target.value }), onDescription: e => setF({ description: e.target.value }), onEmail: e => setF({ email: e.target.value }),
+      hasErr: !!err, err, invalid: !cmd || !txt || !!err,
+      add: () => {
+        if (!cmd || !txt || err) return;
+        const id = this.uid('c');
+        this.updH(hid, y => ({ ...y, crons: [...y.crons, { id, command: cmd, frequency: fq.split(/\s+/).join(' '), language: lang, email, description: F.description.trim(), busy: 'Création…' }] }));
+        this.htask(hid, 'cron/create', cmd, y => ({ ...y, crons: y.crons.map(z => z.id === id ? { ...z, busy: null } : z) }));
+        setF({ command: '', frequency: '', description: '', email: '' });
+        this.setState({ adding: null });
+        this.showToast('Tâche planifiée envoyée');
+      },
+    };
+  }
+
+  hopsVals(h) {
+    return { empty: !h.tasks.length, rows: h.tasks.map(t => {
+      const k = t.status === 'init' ? 'todo' : t.status;
+      const [statusLabel, tagBg, tagColor, tagIcon] = STATUS[k] || [t.status, 'var(--color-neutral-800)', 'var(--color-neutral-200)', ''];
+      return { fn: fnLabel(t.function), obj: t.objectId || '', hasObj: !!t.objectId, statusLabel, tagBg, tagColor, tagIcon, hasIcon: !!tagIcon, running: k === 'doing',
+        created: rel(t.createdTs ?? parseLbl(t.created)) || t.created, createdTitle: t.created,
+        done: t.done ? (rel(t.doneTs ?? parseLbl(t.done)) || t.done) : '—', doneTitle: t.done || '' };
+    }) };
+  }
+
   pickerVals(active, list, selId, d) {
     const pk = this.state.pk || { open: false, q: '', hi: 0 };
     const q = pk.q.trim().toLowerCase();
@@ -1153,7 +2144,7 @@ class Component extends DCLogic {
     const hi = Math.min(pk.hi, Math.max(0, matches.length - 1));
     const set = p => this.setState(s => ({ pk: { ...(s.pk || { open: false, q: '', hi: 0 }), ...p } }));
     const close = () => set({ open: false, q: '', hi: 0 });
-    const pick = id => { this.setState(s => ({ sel: { ...s.sel, [active]: id }, editing: null, nsEdit: null, ctEdit: null, glueF: { host: '', ips: '' }, dynF: { suffix: '', sub: '', pass: '' }, dynReveal: null, dynPw: null, zf: { type: '', q: '' } })); close(); };
+    const pick = id => { this.setState(s => ({ sel: { ...s.sel, [active]: id }, editing: null, nsEdit: null, ctEdit: null, adding: null, msF: null, msDel: null, uPw: null, hReveal: null, dbRestore: null, envEdit: null, glueF: { host: '', ips: '' }, dynF: { suffix: '', sub: '', pass: '' }, dynReveal: null, dynPw: null, zf: { type: '', q: '' } })); close(); };
     this._openPicker = () => set({ open: true, q: '', hi: Math.max(0, list.findIndex(i => i.id === selId)) });
     return {
       open: pk.open,
@@ -1213,6 +2204,8 @@ class Component extends DCLogic {
     const selId = list.some(i => i.id === this.state.sel[active]) ? this.state.sel[active] : list[0].id;
     const it = list.find(i => i.id === selId);
     const isDomain = active === 'domains';
+    const isHosting = active === 'hosting';
+    const host = isHosting ? this.hostingVals(selId, this.hostOf(selId)) : {};
 
     let dom = {};
     if (isDomain) {
@@ -1266,9 +2259,11 @@ class Component extends DCLogic {
       cur: { label: d.label, icon: d.icon, primary: d.primary, actions2: d.actions2 },
       selId,
       pk: this.pickerVals(active, list, selId, d),
-      isDomain, notDomain: !isDomain,
-      ...dom,
+      isDomain, isHosting, isGeneric: !isDomain && !isHosting,
+      ...dom, ...host,
+      ...(() => { const K = ['dyn', 'glue', 'users', 'env', 'cron'], a = this.state.adding; return { add: Object.fromEntries(K.map(k => [k, a === k])), addClosed: Object.fromEntries(K.map(k => [k, a !== k])), addOpen: Object.fromEntries(K.map(k => [k, () => this.setState({ adding: k })])), addClose: () => this.setState({ adding: null }) }; })(),
       hasToast: !!this.state.toast,
+      toastBottom: 'var(--space-8)',
       toast: this.state.toast ? { msg: this.state.toast.msg, canUndo: !!this.state.toast.undo, undo: this.state.toast.undo } : {},
       item: { ...it, name: it.id, tagClass: it.ok ? 'tag-accent' : 'tag-outline', tagBg: it.ok ? 'var(--color-success-800)' : 'transparent', tagColor: it.ok ? 'var(--color-success-200)' : 'var(--color-accent)', infos: it.infos.map(([k, v]) => ({ k, v })) },
     };

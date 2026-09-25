@@ -1,11 +1,14 @@
 /**
- * Onglet « Zone DNS » : le tableau des enregistrements et son brouillon.
+ * Onglet « Zone DNS » : le tableau des enregistrements et leur saisie.
  *
  * Deux contraintes de l'API décident de la forme de cet écran, et ne doivent pas
  * être gommées :
  *
- * - **modifier n'est pas publier.** Rien n'est servi avant un `zoneRefresh`. Le
- *   bandeau de brouillon et l'état de la zone le disent en toutes lettres ;
+ * - **une écriture publie la zone dans la foulée.** Il n'y a donc ni brouillon
+ *   ni bannière de publication : rien dans l'API ne permettrait de savoir, au
+ *   chargement suivant, qu'une publication reste due — `isDeployed` décrit la
+ *   santé de la zone, pas un état de brouillon. Ce qui reste affiché, c'est
+ *   l'avertissement d'une zone qui ne répond pas ;
  * - **le type d'un enregistrement ne se modifie pas.** Le changer impose une
  *   suppression puis une création, donc un nouvel identifiant. L'interface
  *   l'annonce avant de le faire, elle ne le fait pas en douce.
@@ -24,7 +27,6 @@ import type { RecordCreate } from "../../ovh-api";
 import {
   applyRecordEdit,
   describeFailure,
-  publishZone,
   refreshZoneStatus,
   ZonePublishPending,
   type ZoneEdit,
@@ -41,6 +43,7 @@ import {
   parsedTtl,
   recordEditorError,
   txtFlavour,
+  type RecordDraft,
   type RecordEditor,
   type ZoneRow,
 } from "./state";
@@ -76,6 +79,7 @@ function renderRecordsSection(ctx: DomainContext): HTMLElement {
   return el("section", { attrs: { "aria-label": "Enregistrements de la zone DNS" } }, [
     renderToolbar(ctx, allRows),
     renderZoneState(ctx),
+    state.newRecord ? renderNewRecordForm(ctx, state.newRecord) : null,
     renderTable(ctx, shown),
   ]);
 }
@@ -138,63 +142,30 @@ function renderToolbar(ctx: DomainContext, allRows: ZoneRow[]): HTMLElement {
     button("Ajouter un enregistrement", {
       class: "btn btn-primary",
       icon: icon("plus"),
+      disabled: state.newRecord !== null,
       onClick: () => {
-        state.editor = {
-          id: null,
-          tempId: null,
-          subDomain: "",
-          fieldType: "A",
-          ttl: "",
-          target: "",
-          originalType: null,
-          changingType: false,
-        };
+        state.editor = null;
+        state.newRecord = { fieldType: "A", subDomain: "", ttl: "", target: "" };
         ctx.rerender();
-        focusFirstEditorInput();
+        document.querySelector<HTMLInputElement>(".rec-form input")?.focus();
       },
     }),
   ]);
 }
 
 /**
- * Publie la zone : ce qui a été écrit devient ce qui est servi.
- *
- * Les enregistrements sont déjà chez OVHcloud à ce stade — l'écriture est
- * immédiate. Ce bouton ne fait que le second temps du modèle de l'API.
- */
-async function publish(ctx: DomainContext): Promise<void> {
-  const { bundle, state } = ctx;
-  state.publishing = true;
-  state.editor = null;
-  ctx.rerender();
-
-  try {
-    await publishZone(bundle.name);
-    state.publishPending = false;
-    toast("Publication de la zone lancée");
-  } catch (e) {
-    toastError(`Publication refusée : ${describeFailure(e).message}`);
-  }
-
-  state.publishing = false;
-  ctx.reload({ force: true });
-  void refreshZoneStatus(ctx.bundle.name);
-  ctx.trackTasks();
-}
-
-/**
  * Écrit l'enregistrement chez OVHcloud, puis relit la zone.
  *
- * L'écriture est immédiate : c'est ce que fait l'API, et c'est ce que
- * l'utilisateur croit faire en validant. La zone passe alors en « non publiée »
- * — l'API le dit elle-même — et la bannière propose de publier.
+ * L'écriture et la publication vont ensemble : c'est ce que l'utilisateur croit
+ * faire en validant, et rien dans l'API ne permettrait de retenir qu'une
+ * publication reste due.
  */
 async function applyAndReload(
   ctx: DomainContext,
   edit: ZoneEdit,
   verb: string,
 ): Promise<void> {
-  ctx.state.publishing = true;
+  ctx.state.writing = true;
   ctx.rerender();
   try {
     await applyRecordEdit(ctx.bundle.name, edit);
@@ -203,13 +174,14 @@ async function applyAndReload(
     // La publication peut échouer après une écriture réussie : le dire
     // exactement, sinon on laisse croire que la modification est perdue.
     if (e instanceof ZonePublishPending) {
-      toastError(`Enregistrement ${verb}, mais publication refusée : ${e.reason}`);
-      ctx.state.publishPending = true;
+      toastError(
+        `Enregistrement ${verb}, mais la publication a échoué : ${e.reason}. Rejouez la modification pour la republier.`,
+      );
     } else {
       toastError(`Enregistrement non ${verb} : ${describeFailure(e).message}`);
     }
   }
-  ctx.state.publishing = false;
+  ctx.state.writing = false;
   ctx.reload({ force: true });
   void refreshZoneStatus(ctx.bundle.name);
 }
@@ -220,7 +192,7 @@ async function retypeAndReload(
   id: number,
   record: RecordCreate,
 ): Promise<void> {
-  ctx.state.publishing = true;
+  ctx.state.writing = true;
   ctx.rerender();
   try {
     await applyRecordEdit(ctx.bundle.name, { op: "delete", id });
@@ -228,82 +200,246 @@ async function retypeAndReload(
     toast(`Enregistrement remplacé par un ${record.fieldType}`);
   } catch (e) {
     if (e instanceof ZonePublishPending) {
-      toastError(`Enregistrement remplacé, mais publication refusée : ${e.reason}`);
-      ctx.state.publishPending = true;
+      toastError(
+        `Enregistrement remplacé, mais la publication a échoué : ${e.reason}. Rejouez la modification pour la republier.`,
+      );
     } else {
       toastError(`Changement de type refusé : ${describeFailure(e).message}`);
     }
   }
-  ctx.state.publishing = false;
+  ctx.state.writing = false;
   ctx.reload({ force: true });
   void refreshZoneStatus(ctx.bundle.name);
 }
 
 /**
- * L'état de la zone, en deux signaux qu'il ne faut surtout pas confondre.
+ * L'état de la zone — un seul signal, et il est grave.
  *
- * - **Une publication a échoué.** Cas rare : l'écriture est passée, le
- *   rafraîchissement non. Chaque écriture publie la zone dans la foulée, donc
- *   il n'y a normalement jamais rien « en attente » — et c'est voulu : rien dans
- *   l'API ne permettrait de le savoir au chargement suivant.
- * - **La zone n'est pas déployée.** `isDeployed: false` est bien plus grave :
- *   la zone n'est pas opérationnelle. Lexicon refuse purement et simplement d'y
- *   travailler dans ce cas. Ça mérite un avertissement, pas un bouton publier.
+ * `isDeployed: false` ne veut pas dire « des modifications attendent une
+ * publication » : la zone n'est pas opérationnelle, elle ne répond pas. Il n'y a
+ * pas de bannière de publication en face, parce que chaque écriture publie la
+ * zone dans la foulée : afficher « à jour » ou « en attente » demanderait de
+ * mémoriser une référence que l'API ne donne pas.
  */
 function renderZoneState(ctx: DomainContext): HTMLElement | null {
   const { bundle, state } = ctx;
   const status = bundle.zoneStatus;
 
-  if (state.publishing) {
+  if (state.writing) {
     return el("div", { class: "zone-state is-busy" }, [
       spinner(14),
-      "Publication de la zone en cours…",
+      "Écriture puis publication de la zone en cours…",
     ]);
   }
 
-  const parts: HTMLElement[] = [];
+  if (!status || status.isDeployed) return null;
 
-  if (status && !status.isDeployed) {
-    parts.push(
-      el("div", { class: "zone-state is-error" }, [
-        icon("warning", { size: 16 }),
-        "Cette zone n'est pas déployée : elle ne répond pas. Vérifie sa configuration chez OVHcloud.",
-        ...(status.errors ?? []).map((e) => el("span", { class: "rec-error", text: e })),
-        ...(status.warnings ?? []).map((w) => el("span", { class: "text-muted", text: w })),
-      ]),
+  return el("div", { class: "zone-states" }, [
+    el("div", { class: "zone-state is-error" }, [
+      icon("warning", { size: 16 }),
+      "Cette zone n'est pas déployée : elle ne répond pas. Vérifie sa configuration chez OVHcloud.",
+      ...(status.errors ?? []).map((e) => el("span", { class: "rec-error", text: e })),
+      ...(status.warnings ?? []).map((w) => el("span", { class: "text-muted", text: w })),
+    ]),
+  ]);
+}
+
+// ---------------------------------------------------------------------------
+// Ajout d'un enregistrement
+// ---------------------------------------------------------------------------
+
+/**
+ * Le formulaire d'ajout, dans un panneau au-dessus du tableau.
+ *
+ * Il ne vit pas dans une ligne de tableau : une création n'a pas de ligne à
+ * remplacer, et la saisir entre les colonnes rendait le sous-domaine
+ * incompréhensible — c'est ici qu'on peut montrer le nom complet, zone comprise,
+ * pendant la frappe.
+ */
+function renderNewRecordForm(ctx: DomainContext, draft: RecordDraft): HTMLElement {
+  const { bundle, state } = ctx;
+  const zoneTtl = bundle.soa?.ttl ?? null;
+
+  const errorBox = el("div", { class: "form-error", attrs: { hidden: true } });
+  const saveBtn = button("Ajouter", {
+    class: "btn btn-primary",
+    icon: icon("plus"),
+    onClick: () => save(),
+  });
+  const aliasNote = el("div", { class: "form-help" });
+
+  /** L'éditeur et le formulaire partagent la même validation. */
+  function asEditor(): RecordEditor {
+    return {
+      id: null,
+      tempId: null,
+      subDomain: draft.subDomain,
+      fieldType: draft.fieldType,
+      ttl: draft.ttl,
+      target: draft.target,
+      originalType: null,
+      changingType: true,
+    };
+  }
+
+  function revalidate(): void {
+    const editor = asEditor();
+    const err = recordEditorError(editor);
+    errorBox.textContent = err;
+    errorBox.hidden = err === "";
+    saveBtn.disabled = !editorIsSubmittable(editor);
+    // Un alias de confort produit un TXT : le dire avant, pas après.
+    aliasNote.textContent = isTxtAlias(draft.fieldType)
+      ? `${draft.fieldType} est une saisie assistée : l'enregistrement créé sera un ${TXT_ALIASES[draft.fieldType]}.`
+      : "";
+    aliasNote.hidden = !isTxtAlias(draft.fieldType);
+  }
+
+  function cancel(): void {
+    state.newRecord = null;
+    ctx.rerender();
+  }
+
+  function save(): void {
+    const editor = asEditor();
+    if (!editorIsSubmittable(editor)) return;
+    state.newRecord = null;
+    void applyAndReload(
+      ctx,
+      {
+        op: "create",
+        record: {
+          fieldType: editor.fieldType,
+          target: editor.target.trim(),
+          subDomain: parsedSubDomain(editor),
+          ttl: parsedTtl(editor) ?? INHERIT_TTL,
+        },
+      },
+      "ajouté",
     );
   }
 
-  if (state.publishPending) {
-    parts.push(
-      el("div", { class: "zone-state is-undeployed" }, [
-        el("span", { class: "dot" }),
-        "Enregistrements écrits, mais la publication a échoué : ils ne sont pas encore servis.",
-        button("Publier la zone", {
-          class: "btn btn-primary",
-          icon: icon("upload-simple"),
-          onClick: () => void publish(ctx),
+  function onKey(ev: KeyboardEvent): void {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      save();
+    } else if (ev.key === "Escape") {
+      ev.preventDefault();
+      cancel();
+    }
+  }
+
+  const subInput = el("input", {
+    attrs: {
+      type: "text",
+      placeholder: "@",
+      "aria-label": "Sous-domaine",
+      spellcheck: "false",
+      value: draft.subDomain,
+    },
+    on: {
+      input: (ev) => {
+        draft.subDomain = (ev.currentTarget as HTMLInputElement).value;
+        revalidate();
+      },
+      keydown: onKey,
+    },
+  });
+
+  const targetInput = el("input", {
+    class: "input mono",
+    attrs: {
+      type: "text",
+      placeholder: targetHint(draft.fieldType),
+      "aria-label": "Cible",
+      spellcheck: "false",
+      value: draft.target,
+    },
+    on: {
+      input: (ev) => {
+        draft.target = (ev.currentTarget as HTMLInputElement).value;
+        revalidate();
+      },
+      keydown: onKey,
+    },
+  });
+
+  const ttlInput = el("input", {
+    class: "input num",
+    attrs: {
+      type: "text",
+      inputmode: "numeric",
+      placeholder: zoneTtl ? `zone · ${formatDuration(zoneTtl)}` : "TTL de la zone",
+      "aria-label": "TTL en secondes",
+      value: draft.ttl,
+    },
+    on: {
+      input: (ev) => {
+        draft.ttl = (ev.currentTarget as HTMLInputElement).value;
+        revalidate();
+      },
+      keydown: onKey,
+    },
+  });
+
+  const typeSelect = el(
+    "select",
+    {
+      class: "input",
+      attrs: { "aria-label": "Type d'enregistrement" },
+      on: {
+        change: (ev) => {
+          draft.fieldType = (ev.currentTarget as HTMLSelectElement).value;
+          // Confort de la console OVH : un DMARC vit sous `_dmarc`.
+          if (draft.fieldType === "DMARC" && !draft.subDomain.trim()) {
+            draft.subDomain = "_dmarc";
+            subInput.value = "_dmarc";
+          }
+          targetInput.placeholder = targetHint(draft.fieldType);
+          revalidate();
+        },
+      },
+    },
+    recordTypeOptions().map((o) =>
+      el("option", {
+        text: o.label,
+        attrs: { value: o.value, selected: o.value === draft.fieldType },
+      }),
+    ),
+  );
+
+  revalidate();
+
+  return el("div", { class: "rec-form panel-accent" }, [
+    el("div", { class: "form-title", text: "Nouvel enregistrement" }),
+    el("div", { class: "form-grid" }, [
+      el("span", { class: "form-key", text: "Type" }),
+      typeSelect,
+      el("span", { class: "form-key", text: "Sous-domaine" }),
+      // Le nom complet est montré pendant la frappe : c'est lui qui répondra,
+      // pas le seul sous-domaine saisi.
+      el("div", { class: "suffixed-input" }, [
+        subInput,
+        el("span", { text: `.${bundle.name}` }),
+      ]),
+      el("span", { class: "form-key", text: "Cible" }),
+      targetInput,
+      el("span", { class: "form-key", text: "TTL" }),
+      el("div", { class: "cron-freq-field" }, [
+        ttlInput,
+        el("span", {
+          class: "form-help",
+          text: "En secondes. Vide : TTL de la zone.",
         }),
       ]),
-    );
-  } else if (!status) {
-    parts.push(
-      el("div", { class: "zone-state" }, [
-        el("span", { class: "dot", style: { background: "var(--color-neutral-500)" } }),
-        "État de la zone indisponible.",
-      ]),
-    );
-  } else if (status.isDeployed) {
-    parts.push(
-      el("div", { class: "zone-state" }, [
-        el("span", { class: "dot" }),
-        "Zone déployée : les enregistrements ci-dessous sont ceux qui sont servis.",
-      ]),
-    );
-  }
-
-  if (parts.length === 0) return null;
-  return el("div", { class: "zone-states" }, parts);
+    ]),
+    aliasNote,
+    errorBox,
+    el("div", { class: "form-actions" }, [
+      saveBtn,
+      button("Annuler", { class: "btn btn-secondary", onClick: cancel }),
+    ]),
+  ]);
 }
 
 // ---------------------------------------------------------------------------
@@ -324,11 +460,6 @@ function renderTable(ctx: DomainContext, rows: ZoneRow[]): HTMLElement {
       continue;
     }
     body.appendChild(viewRow(ctx, row));
-  }
-
-  // Une création se saisit en bas du tableau, pas à la place d'une ligne.
-  if (state.editor && state.editor.id === null && state.editor.tempId === null) {
-    for (const node of editorRows(ctx, state.editor)) body.appendChild(node);
   }
 
   const table = el("table", { class: "table" }, [
@@ -390,7 +521,12 @@ function viewRow(ctx: DomainContext, row: ZoneRow): HTMLTableRowElement {
             : "TTL de la zone",
       }),
     ]),
-    el("td", {}, [el("span", { class: "rec-target", text: row.target })]),
+    el("td", {}, [
+      el("div", { class: "rec-target-cell" }, [
+        el("span", { class: "rec-target", text: row.target }),
+        renderHostingLink(ctx, row.target),
+      ]),
+    ]),
     el("td", {}, [
       el("div", { class: "rec-actions" }, [
         editable
@@ -716,4 +852,24 @@ function focusFirstEditorInput(): void {
   const input = document.querySelector<HTMLInputElement>(".editor-focus");
   input?.focus();
   input?.select();
+}
+
+/**
+ * Le raccourci vers l'hébergement que sert cet enregistrement.
+ *
+ * Il n'apparaît que si la cible est **réellement** une adresse d'un hébergement
+ * du compte : sinon il n'y a rien à ouvrir, et un bouton mort vaut moins que pas
+ * de bouton.
+ */
+function renderHostingLink(ctx: DomainContext, target: string): HTMLElement | null {
+  const key = target.toLowerCase().replace(/\.$/, "");
+  const found = ctx.hostings.get(key);
+  if (!found) return null;
+  return button("", {
+    class: "btn btn-ghost btn-icon",
+    icon: icon("arrow-square-out", { size: 14 }),
+    title: `Ouvrir l'hébergement ${found.title}`,
+    ariaLabel: `Ouvrir l'hébergement ${found.title}`,
+    onClick: () => ctx.openHosting(found.serviceName),
+  });
 }

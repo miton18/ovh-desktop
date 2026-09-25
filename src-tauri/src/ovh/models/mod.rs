@@ -15,6 +15,7 @@
 
 pub mod common;
 pub mod domain;
+pub mod hosting;
 pub mod me;
 
 mod enum_macro;

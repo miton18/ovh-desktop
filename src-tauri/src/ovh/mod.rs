@@ -9,6 +9,7 @@ pub mod domain;
 pub mod embedded_app;
 pub mod endpoint;
 pub mod error;
+pub mod hosting;
 pub mod me;
 pub mod models;
 pub mod preferences;

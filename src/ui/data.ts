@@ -18,6 +18,7 @@
 
 import {
   domain as api,
+  hosting as hostingApi,
   isOvhError,
   type ChangeContact,
   type Contact,
@@ -45,10 +46,24 @@ import {
   me as meApi,
   contactDisplayName,
   type MeContact,
+  type AttachedDomain,
+  type Cron,
+  type CronInput,
+  type Database,
+  type DatabaseDump,
+  type EnvVar,
+  type HostingService,
+  type HostingCapabilities,
+  type HostingSsl,
+  type HostingTask,
+  type HostingUser,
+  type HostingUserCreate,
+  type Runtime,
 } from "../ovh-api";
 import type { IconName } from "./icons";
 import {
   domainStateLabel,
+  hostingStatePresentation,
   isHealthyDomainState,
   renewalStateLabel,
 } from "./labels";
@@ -229,6 +244,7 @@ export function invalidateAll(): void {
   contactsCache = null;
   meContactsCache = new Map();
   bundleCache.clear();
+  invalidateHostingCaches();
 }
 
 // ===========================================================================
@@ -315,9 +331,13 @@ function initials(name: string): string {
 /**
  * Les familles de produits de la barre latérale.
  *
- * En mode normal, seuls les domaines existent : le backend n'expose que
- * `/domain`. Les quatre autres familles de la maquette n'apparaissent qu'en mode
- * « données d'exemple », marquées `live: false`.
+ * Deux familles sont branchées sur l'API : `/domain` et `/hosting/web`. Les
+ * autres familles de la maquette n'apparaissent qu'en mode « données
+ * d'exemple », marquées `live: false`.
+ *
+ * L'hébergement n'apparaît qu'une fois su qu'il y en a — et son échec de
+ * lecture ne fait pas tomber la barre latérale : une délégation sans droit sur
+ * `/hosting/web` doit laisser les domaines accessibles.
  */
 export async function listSections(): Promise<ProductSection[]> {
   const domains = await listDomainNames();
@@ -330,6 +350,25 @@ export async function listSections(): Promise<ProductSection[]> {
       live: true,
     },
   ];
+
+  let hostings: string[] = [];
+  try {
+    hostings = await listHostingNames();
+  } catch {
+    // Pas de droit, ou pas d'hébergement : dans les deux cas la famille n'a
+    // rien à montrer, et l'écran des domaines doit rester utilisable.
+    hostings = [];
+  }
+  if (hostings.length > 0) {
+    sections.push({
+      id: "hosting",
+      label: "Hébergements web",
+      icon: "browsers",
+      count: hostings.length,
+      live: true,
+    });
+  }
+
   if (mode === "sample") {
     for (const s of sample.sampleOtherSections()) {
       sections.push({ ...s, live: false });
@@ -354,6 +393,7 @@ export async function listProducts(
   section: SectionId,
   onEnrich?: (products: ProductSummary[]) => void,
 ): Promise<ProductSummary[]> {
+  if (section === "hosting") return listHostingProducts(onEnrich);
   if (section !== "domains") {
     return mode === "sample" ? sample.sampleOtherProducts(section) : [];
   }
@@ -404,7 +444,9 @@ export async function getProduct(
   section: SectionId,
   id: string,
 ): Promise<ProductDetail | null> {
-  if (section === "domains") return null;
+  // Domaines et hébergements ont chacun leur page complète : cette vue
+  // générique ne sert qu'aux familles qui n'en ont pas encore.
+  if (section === "domains" || section === "hosting") return null;
   return mode === "sample" ? sample.sampleOtherProduct(section, id) : null;
 }
 
@@ -695,18 +737,6 @@ export class ZonePublishPending extends Error {
   }
 }
 
-/**
- * Publie la zone : ce qui a été écrit devient ce qui est servi.
- *
- * Sans cet appel, les enregistrements existent côté API mais ne répondent pas —
- * c'est le second temps du modèle d'OVHcloud, pas une invention d'ici.
- */
-export async function publishZone(zone: string): Promise<void> {
-  if (mode === "sample") sample.sampleRefreshZone(zone);
-  else await api.zoneRefresh(zone);
-  invalidateDomain(zone);
-}
-
 export async function publishZoneEdits(
   zone: string,
   edits: ZoneEdit[],
@@ -913,4 +943,555 @@ export function contactNameOf(bundle: DomainBundle, contactId: string): string |
   if (!Number.isFinite(n)) return null;
   const found = bundle.contacts.find((c) => c.id === n);
   return found ? nameOf(found) : null;
+}
+
+// ===========================================================================
+// Hébergement web — lecture
+// ===========================================================================
+
+/**
+ * Tout ce que la page d'un hébergement affiche, agrégé.
+ *
+ * Même règle que pour un domaine : ce qui n'a pas pu être lu est vide et sa
+ * raison est dans `partialErrors`. Seule la fiche de l'hébergement est
+ * obligatoire — sans elle il n'y a pas de page.
+ *
+ * `dumps` est rempli à la demande, base par base : `GET …/database/{name}/dump`
+ * ne rend que des identifiants, et charger les sauvegardes de toutes les bases
+ * au chargement de la page coûterait des appels que personne n'a demandés.
+ */
+export type HostingBundle = {
+  serviceName: string;
+  service: HostingService;
+  /**
+   * Ce que l'offre autorise.
+   *
+   * `null` quand la lecture a échoué : l'interface propose alors tout et laisse
+   * l'API arbitrer, plutôt que d'interdire sur une ignorance.
+   */
+  capabilities: HostingCapabilities | null;
+  attachedDomains: AttachedDomain[];
+  users: HostingUser[];
+  databases: Database[];
+  /** Sauvegardes déjà chargées, par nom de base. */
+  dumps: Record<string, DatabaseDump[]>;
+  crons: Cron[];
+  envVars: EnvVar[];
+  runtimes: Runtime[];
+  ssl: HostingSsl | null;
+  tasks: HostingTask[];
+  partialErrors: { part: string; message: string }[];
+};
+
+let hostingNamesCache: string[] | null = null;
+let hostingServicesCache: Map<string, HostingService> | null = null;
+const hostingBundleCache = new Map<string, HostingBundle>();
+/**
+ * Les zones DNS du compte.
+ *
+ * Elles décident si l'API pourra configurer le DNS d'un domaine qu'on attache :
+ * une zone absente de cette liste n'est pas écrivable, et le formulaire doit le
+ * dire **avant** de valider plutôt que de laisser l'API refuser.
+ */
+let zoneNamesCache: string[] | null = null;
+
+function invalidateHostingCaches(): void {
+  hostingNamesCache = null;
+  hostingServicesCache = null;
+  hostingBundleCache.clear();
+  zoneNamesCache = null;
+  zoneAddressCache.clear();
+  hostingAddressIndex = null;
+  offerCapabilitiesCache.clear();
+}
+
+export function invalidateHosting(serviceName: string): void {
+  hostingBundleCache.delete(serviceName);
+}
+
+export async function listHostingNames(options: { force?: boolean } = {}): Promise<
+  string[]
+> {
+  if (mode === "sample") return sample.sampleHostingNames();
+  if (hostingNamesCache && !options.force) return hostingNamesCache;
+  hostingNamesCache = await hostingApi.list();
+  return hostingNamesCache;
+}
+
+/** Les zones DNS du compte, pour savoir où l'API a le droit d'écrire. */
+export async function listZoneNames(): Promise<string[]> {
+  if (mode === "sample") return sample.sampleZoneNames();
+  if (zoneNamesCache) return zoneNamesCache;
+  try {
+    zoneNamesCache = await api.zonesList();
+  } catch {
+    // Sans la liste, le formulaire de multisite retombe sur « je ne sais pas si
+    // l'API pourra écrire » : c'est moins précis, mais ça ne bloque rien.
+    zoneNamesCache = [];
+  }
+  return zoneNamesCache;
+}
+
+async function loadHostingServices(): Promise<Map<string, HostingService>> {
+  if (hostingServicesCache) return hostingServicesCache;
+  const list = await hostingApi.fetch();
+  hostingServicesCache = new Map(list.map((h) => [h.serviceName, h]));
+  return hostingServicesCache;
+}
+
+/**
+ * Le titre d'un hébergement. `displayName` d'abord, sinon le **code d'offre
+ * brut** : `offer` compte 88 valeurs dont des fossiles (`start1m`,
+ * `deproxxl2012`) et aucune table de correspondance ne tiendrait.
+ */
+export function hostingTitle(service: HostingService): string {
+  return service.displayName?.trim() || service.offer;
+}
+
+function hostingSummary(service: HostingService): ProductSummary {
+  const state = hostingStatePresentation(service.state);
+  const title = service.displayName?.trim();
+  return {
+    id: service.serviceName,
+    offer: title ? `${title} · ${service.offer}` : `${service.offer} · ${service.cluster}`,
+    status: state.label,
+    ok: state.tone === "ok",
+  };
+}
+
+async function listHostingProducts(
+  onEnrich?: (products: ProductSummary[]) => void,
+): Promise<ProductSummary[]> {
+  const names = await listHostingNames();
+
+  if (mode === "sample") {
+    return names.map((name) => hostingSummary(sample.sampleHostingService(name)));
+  }
+
+  const known = hostingServicesCache;
+  const build = (): ProductSummary[] =>
+    names.map((name) => {
+      const svc = known?.get(name);
+      return svc ? hostingSummary(svc) : { id: name, offer: "…", status: "", ok: true };
+    });
+
+  const immediate = build();
+
+  // Même compromis que pour les domaines : les noms tout de suite, les fiches
+  // ensuite — `hostings_fetch` coûte un appel par hébergement.
+  if (onEnrich && (!known || names.some((n) => !known.has(n)))) {
+    void loadHostingServices()
+      .then(() => onEnrich(build()))
+      .catch(() => {
+        // Naviguer ne demande que les noms : un échec ici n'est pas bloquant.
+      });
+  }
+
+  return immediate;
+}
+
+/**
+ * Les capacités d'une offre, mises en cache par code d'offre.
+ *
+ * La route est ouverte et ne dépend pas du compte : deux hébergements sur la
+ * même offre partagent la réponse, et elle ne change pas d'une session à l'autre.
+ */
+const offerCapabilitiesCache = new Map<string, HostingCapabilities>();
+
+export async function loadOfferCapabilities(
+  offer: string,
+): Promise<HostingCapabilities> {
+  const cached = offerCapabilitiesCache.get(offer);
+  if (cached) return cached;
+  const capabilities =
+    mode === "sample"
+      ? sample.sampleOfferCapabilities(offer)
+      : await hostingApi.offerCapabilities(offer);
+  offerCapabilitiesCache.set(offer, capabilities);
+  return capabilities;
+}
+
+/** Charge tout ce dont la page d'un hébergement a besoin, en parallèle. */
+export async function loadHostingBundle(
+  serviceName: string,
+  options: { force?: boolean } = {},
+): Promise<HostingBundle> {
+  if (mode === "sample") {
+    const bundle = sample.sampleHostingBundle(serviceName);
+    hostingBundleCache.set(serviceName, bundle);
+    return bundle;
+  }
+
+  const cached = hostingBundleCache.get(serviceName);
+  if (cached && !options.force) return cached;
+
+  const service = await hostingApi.get(serviceName);
+
+  const errors: { part: string; message: string }[] = [];
+  const settled = await Promise.allSettled([
+    hostingApi.attachedDomains(serviceName),
+    // Les capacités de l'offre partent avec le reste : elles décident de ce que
+    // chaque onglet a le droit de proposer, et sans elles on laisserait l'API
+    // répondre 400 sur une action que l'offre n'autorise pas.
+    loadOfferCapabilities(service.offer),
+    hostingApi.users(serviceName),
+    hostingApi.databases(serviceName),
+    hostingApi.crons(serviceName),
+    hostingApi.envVars(serviceName),
+    hostingApi.runtimes(serviceName),
+    hostingApi.ssl(serviceName),
+    hostingApi.tasks(serviceName),
+  ] as const);
+
+  function pick<T>(index: number, part: string, fallback: T): T {
+    const r = settled[index];
+    if (r.status === "fulfilled") return r.value as T;
+    errors.push({ part, message: describeFailure(r.reason).message });
+    return fallback;
+  }
+
+  const bundle: HostingBundle = {
+    serviceName,
+    service,
+    attachedDomains: pick<AttachedDomain[]>(0, "multisites", []),
+    // Capacités illisibles : on n'en fait pas une erreur d'écran. L'interface
+    // propose alors tout, et l'API reste l'arbitre.
+    capabilities:
+      settled[1].status === "fulfilled"
+        ? (settled[1].value as HostingCapabilities)
+        : null,
+    users: pick<HostingUser[]>(2, "utilisateurs FTP", []),
+    databases: pick<Database[]>(3, "bases de données", []),
+    dumps: {},
+    crons: pick<Cron[]>(4, "tâches planifiées", []),
+    envVars: pick<EnvVar[]>(5, "variables d'environnement", []),
+    runtimes: pick<Runtime[]>(6, "configurations d'exécution", []),
+    // Un hébergement sans certificat hébergé répond 404 : c'est une absence, pas
+    // une panne, et elle ne mérite donc pas de message d'erreur à l'écran.
+    ssl: settled[7].status === "fulfilled" ? (settled[7].value as HostingSsl) : null,
+    tasks: pick<HostingTask[]>(8, "opérations", []),
+    partialErrors: errors,
+  };
+
+  hostingBundleCache.set(serviceName, bundle);
+  return bundle;
+}
+
+function patchHostingBundle(
+  serviceName: string,
+  patch: Partial<HostingBundle>,
+): void {
+  const cached = hostingBundleCache.get(serviceName);
+  if (cached) hostingBundleCache.set(serviceName, { ...cached, ...patch });
+}
+
+/** Relit les seules tâches — appelé pendant le suivi d'une opération. */
+export async function refreshHostingTasks(serviceName: string): Promise<HostingTask[]> {
+  if (mode === "sample") {
+    const tasks = sample.sampleHostingBundle(serviceName).tasks;
+    patchHostingBundle(serviceName, { tasks });
+    return tasks;
+  }
+  try {
+    const tasks = await hostingApi.tasks(serviceName);
+    patchHostingBundle(serviceName, { tasks });
+    return tasks;
+  } catch {
+    return hostingBundleCache.get(serviceName)?.tasks ?? [];
+  }
+}
+
+/**
+ * Charge les sauvegardes d'une base, à la demande.
+ *
+ * Elles ne sont demandées qu'à l'ouverture du volet : `GET …/dump` ne rend que
+ * des identifiants, et chaque sauvegarde coûte un appel de plus.
+ */
+export async function loadDatabaseDumps(
+  serviceName: string,
+  database: string,
+): Promise<DatabaseDump[]> {
+  const dumps =
+    mode === "sample"
+      ? sample.sampleDatabaseDumps(serviceName, database)
+      : await hostingApi.databaseDumps(serviceName, database);
+  const cached = hostingBundleCache.get(serviceName);
+  if (cached) {
+    hostingBundleCache.set(serviceName, {
+      ...cached,
+      dumps: { ...cached.dumps, [database]: dumps },
+    });
+  }
+  return dumps;
+}
+
+/**
+ * Les enregistrements d'adresse d'une zone : A, AAAA et CNAME.
+ *
+ * Ils servent deux fois dans l'écran d'hébergement : pour dire si un multisite
+ * pointe réellement vers l'hébergement, et pour montrer ce que l'attachement va
+ * écrire. Trois appels filtrés par `fieldType` couvrent toute la zone d'un coup
+ * — bien moins que la zone entière, qui coûte un appel par enregistrement — et
+ * le résultat est mis en cache par zone, parce qu'un tableau de multisites
+ * interroge souvent la même.
+ */
+const zoneAddressCache = new Map<string, Record_[]>();
+
+/** Ce qui est déjà en cache, sans déclencher d'appel. `null` = pas encore lu. */
+export function cachedZoneAddresses(zone: string): Record_[] | null {
+  return zoneAddressCache.get(zone) ?? null;
+}
+
+export async function loadZoneAddresses(zone: string): Promise<Record_[]> {
+  const cached = zoneAddressCache.get(zone);
+  if (cached) return cached;
+
+  if (mode === "sample") {
+    const records = sample.sampleZoneAddresses(zone);
+    zoneAddressCache.set(zone, records);
+    return records;
+  }
+
+  const settled = await Promise.allSettled(
+    ["A", "AAAA", "CNAME"].map((fieldType) => api.recordsFetch(zone, { fieldType })),
+  );
+  const out: Record_[] = [];
+  for (const r of settled) {
+    if (r.status === "fulfilled") out.push(...r.value);
+  }
+  // Une lecture entièrement en échec n'est pas mise en cache : ce serait geler
+  // « aucune adresse » alors qu'on n'a rien pu lire.
+  if (settled.some((r) => r.status === "fulfilled")) zoneAddressCache.set(zone, out);
+  return out;
+}
+
+// ===========================================================================
+// Hébergement web — écriture
+//
+// Toutes ces écritures rendent une **tâche**, pas un résultat : l'appelant doit
+// lancer le suivi. Et contrairement aux tâches de domaine, aucune ne s'annule.
+// ===========================================================================
+
+export async function createAttachedDomain(
+  serviceName: string,
+  payload: AttachedDomain,
+): Promise<HostingTask> {
+  const task =
+    mode === "sample"
+      ? sample.sampleCreateAttachedDomain(serviceName, payload)
+      : await hostingApi.attachedDomainCreate(serviceName, payload);
+  invalidateHosting(serviceName);
+  // Attacher un domaine sans `bypassDNSConfiguration` fait écrire l'API dans la
+  // zone : ce qui est en cache pour ce domaine ne vaut plus rien.
+  if (payload.domain) invalidateZoneOf(payload.domain);
+  return task;
+}
+
+export async function updateAttachedDomain(
+  serviceName: string,
+  domain: string,
+  payload: AttachedDomain,
+): Promise<void> {
+  if (mode === "sample") sample.sampleUpdateAttachedDomain(serviceName, domain, payload);
+  else await hostingApi.attachedDomainUpdate(serviceName, domain, payload);
+  invalidateHosting(serviceName);
+  invalidateZoneOf(domain);
+}
+
+export async function deleteAttachedDomain(
+  serviceName: string,
+  domain: string,
+): Promise<HostingTask> {
+  const task =
+    mode === "sample"
+      ? sample.sampleDeleteAttachedDomain(serviceName, domain)
+      : await hostingApi.attachedDomainDelete(serviceName, domain);
+  invalidateHosting(serviceName);
+  return task;
+}
+
+/**
+ * Vide le cache de la zone qui porte ce domaine, quand elle est dans le compte.
+ *
+ * Une écriture de multisite peut modifier une zone DNS affichée dans une autre
+ * famille : laisser son cache en place ferait mentir l'onglet Zone DNS.
+ */
+function invalidateZoneOf(domain: string): void {
+  const name = domain.toLowerCase().replace(/\.$/, "");
+  for (const zone of bundleCache.keys()) {
+    if (name === zone || name.endsWith(`.${zone}`)) invalidateDomain(zone);
+  }
+  for (const zone of [...zoneAddressCache.keys()]) {
+    if (name === zone || name.endsWith(`.${zone}`)) zoneAddressCache.delete(zone);
+  }
+}
+
+export async function createHostingUser(
+  serviceName: string,
+  payload: HostingUserCreate,
+): Promise<HostingTask> {
+  const task =
+    mode === "sample"
+      ? sample.sampleCreateHostingUser(serviceName, payload)
+      : await hostingApi.userCreate(serviceName, payload);
+  invalidateHosting(serviceName);
+  return task;
+}
+
+/**
+ * Modifie un utilisateur FTP. `state` et `sshState` sont **deux notions
+ * distinctes** — « le compte est-il ouvert » et « a-t-il droit au shell » — et
+ * l'API prend l'objet entier : les deux partent ensemble, ce qui impose de
+ * renvoyer la valeur courante de celui qu'on ne change pas.
+ */
+export async function updateHostingUser(
+  serviceName: string,
+  user: HostingUser,
+): Promise<void> {
+  if (mode === "sample") sample.sampleUpdateHostingUser(serviceName, user);
+  else await hostingApi.userUpdate(serviceName, user.login, user);
+  invalidateHosting(serviceName);
+}
+
+/**
+ * Remplace le mot de passe d'un utilisateur FTP.
+ *
+ * Il n'existe nulle part dans le modèle : il se pose, il ne se relit pas.
+ * L'appelant est donc le dernier à connaître la valeur — d'où l'affichage unique
+ * côté interface, comme pour DynHost.
+ */
+export async function changeHostingUserPassword(
+  serviceName: string,
+  login: string,
+  password: string,
+): Promise<HostingTask> {
+  const task =
+    mode === "sample"
+      ? sample.sampleChangeHostingUserPassword(serviceName, login)
+      : await hostingApi.userChangePassword(serviceName, login, password);
+  invalidateHosting(serviceName);
+  return task;
+}
+
+export async function deleteHostingUser(
+  serviceName: string,
+  login: string,
+): Promise<HostingTask> {
+  const task =
+    mode === "sample"
+      ? sample.sampleDeleteHostingUser(serviceName, login)
+      : await hostingApi.userDelete(serviceName, login);
+  invalidateHosting(serviceName);
+  return task;
+}
+
+export async function createDatabaseDump(
+  serviceName: string,
+  database: string,
+): Promise<HostingTask> {
+  const task =
+    mode === "sample"
+      ? sample.sampleCreateDatabaseDump(serviceName, database)
+      : await hostingApi.databaseDumpCreate(serviceName, database);
+  invalidateHosting(serviceName);
+  return task;
+}
+
+export async function createCron(
+  serviceName: string,
+  payload: CronInput,
+): Promise<HostingTask> {
+  const task =
+    mode === "sample"
+      ? sample.sampleCreateCron(serviceName, payload)
+      : await hostingApi.cronCreate(serviceName, payload);
+  invalidateHosting(serviceName);
+  return task;
+}
+
+export async function deleteCron(
+  serviceName: string,
+  id: number,
+): Promise<HostingTask> {
+  const task =
+    mode === "sample"
+      ? sample.sampleDeleteCron(serviceName, id)
+      : await hostingApi.cronDelete(serviceName, id);
+  invalidateHosting(serviceName);
+  return task;
+}
+
+/**
+ * Crée une variable d'environnement. `kind` est le `type` déclaré (`string`,
+ * `integer`, `password`) — le mot `type` est réservé côté commande Tauri.
+ *
+ * La valeur est typée `password` par l'API **quel que soit** ce `kind` : elle ne
+ * se relit jamais, et l'interface ne doit donc jamais prétendre le contraire.
+ */
+export async function createEnvVar(
+  serviceName: string,
+  key: string,
+  value: string,
+  kind: string,
+): Promise<HostingTask> {
+  const task =
+    mode === "sample"
+      ? sample.sampleCreateEnvVar(serviceName, key, kind)
+      : await hostingApi.envVarCreate(serviceName, key, value, kind);
+  invalidateHosting(serviceName);
+  return task;
+}
+
+export async function deleteEnvVar(
+  serviceName: string,
+  key: string,
+): Promise<HostingTask> {
+  const task =
+    mode === "sample"
+      ? sample.sampleDeleteEnvVar(serviceName, key)
+      : await hostingApi.envVarDelete(serviceName, key);
+  invalidateHosting(serviceName);
+  return task;
+}
+
+/**
+ * Index des adresses d'hébergement, pour relier un enregistrement DNS à
+ * l'hébergement qu'il sert.
+ *
+ * Clés : l'IPv4, l'IPv6 et le nom du service, en minuscules — un enregistrement
+ * peut pointer par IP (A, AAAA) ou par nom (CNAME). Sans cet index, lire
+ * `203.0.113.10` dans une zone ne dit rien de l'hébergement qui répond derrière.
+ *
+ * Un échec rend un index vide : le lien disparaît, rien ne casse.
+ */
+export type HostingAddressIndex = Map<string, { serviceName: string; title: string }>;
+
+let hostingAddressIndex: HostingAddressIndex | null = null;
+
+export async function loadHostingAddressIndex(): Promise<HostingAddressIndex> {
+  if (hostingAddressIndex) return hostingAddressIndex;
+
+  const index: HostingAddressIndex = new Map();
+  try {
+    const services =
+      mode === "sample"
+        ? sample.sampleHostingNames().map((n) => sample.sampleHostingService(n))
+        : [...(await loadHostingServices()).values()];
+    for (const service of services) {
+      const entry = { serviceName: service.serviceName, title: hostingTitle(service) };
+      for (const key of [service.hostingIp, service.hostingIpv6, service.serviceName]) {
+        if (key) index.set(key.toLowerCase(), entry);
+      }
+      for (const country of service.countriesIp ?? []) {
+        for (const key of [country.ip, country.ipv6]) {
+          if (key) index.set(key.toLowerCase(), entry);
+        }
+      }
+    }
+  } catch {
+    // Pas de droit sur `/hosting/web`, ou aucun hébergement : le lien ne
+    // s'affiche pas, et la zone reste parfaitement lisible sans lui.
+  }
+  hostingAddressIndex = index;
+  return index;
 }

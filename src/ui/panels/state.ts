@@ -82,9 +82,25 @@ export function generatePassword(length = 16): string {
 
 export type DomainTab = "zone" | "registry" | "contacts" | "ops";
 
+/**
+ * Le formulaire d'ajout d'un enregistrement.
+ *
+ * Distinct de `editor`, qui modifie une ligne existante : une création n'a pas
+ * de ligne à remplacer, et la saisir dans un panneau au-dessus du tableau évite
+ * de faire sauter les lignes pendant la frappe.
+ */
+export type RecordDraft = {
+  fieldType: string;
+  subDomain: string;
+  /** Saisi en texte : vide signifie « TTL de la zone ». */
+  ttl: string;
+  target: string;
+};
+
 export type DomainViewState = {
   tab: DomainTab;
   editor: RecordEditor | null;
+  newRecord: RecordDraft | null;
   /** Filtre par type d'enregistrement ; vide = tous. */
   filterType: string;
   filterQuery: string;
@@ -105,24 +121,23 @@ export type DomainViewState = {
   contactEdit: { role: ContactRole; value: string } | null;
   /** Clés des actions en cours, pour désactiver leur bouton sans tout figer. */
   busy: Set<string>;
-  publishing: boolean;
   /**
-   * Une écriture a réussi mais sa publication a échoué.
+   * Une écriture d'enregistrement est en cours.
    *
-   * Uniquement ce cas-là : chaque écriture publie la zone dans la foulée, parce
-   * que rien dans l'API ne permettrait de savoir, au chargement suivant, qu'une
-   * publication reste due. `isDeployed` décrit la santé de la zone, et ni
-   * `lastUpdate` ni le serial SOA ne sont exploitables sans mémoriser une
-   * référence. Ce drapeau ne survit donc volontairement pas à un rechargement :
-   * il ne couvre qu'un échec visible à l'écran, tout de suite.
+   * Il n'y a pas d'état « publication en attente » : chaque écriture publie la
+   * zone dans la foulée, parce que rien dans l'API ne permettrait de savoir, au
+   * chargement suivant, qu'une publication reste due — `isDeployed` décrit la
+   * santé de la zone, et ni `lastUpdate` ni le serial SOA ne sont exploitables
+   * sans mémoriser une référence. D'où l'absence de bannière de publication.
    */
-  publishPending: boolean;
+  writing: boolean;
 };
 
 export function createDomainViewState(): DomainViewState {
   return {
     tab: "zone",
     editor: null,
+    newRecord: null,
     filterType: "",
     filterQuery: "",
     ns: null,
@@ -134,8 +149,7 @@ export function createDomainViewState(): DomainViewState {
     glue: { host: "", ips: "" },
     contactEdit: null,
     busy: new Set(),
-    publishing: false,
-    publishPending: false,
+    writing: false,
   };
 }
 
