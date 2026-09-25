@@ -1,0 +1,9 @@
+# Copier en .cargo/config.toml et renseigner les valeurs obtenues sur
+# https://eu.api.ovh.com/createApp/ — cargo les expose à `option_env!` au moment
+# de compiler, et `src/ovh/embedded_app.rs` les fige dans le binaire.
+#
+# Sans ce fichier, l'application compile et fonctionne : l'utilisateur fournit
+# alors sa propre application via la commande `ovh_set_application`.
+[env]
+OVH_APPLICATION_KEY = ""
+OVH_APPLICATION_SECRET = ""

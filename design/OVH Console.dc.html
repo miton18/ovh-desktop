@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/nocturne-4fab7934-dece-4733-8733-f683d5ba0d5d/styles.css">
+<script src="_ds/nocturne-4fab7934-dece-4733-8733-f683d5ba0d5d/_ds_bundle.js"></script>
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<style>
+:root{
+  --color-bg:#141925;--color-surface:#1f2533;
+  --color-accent:#5b8fd6;--color-accent-2:#7fa3d6;
+  --color-accent-100:#f1f6ff;--color-accent-200:#dde8fc;--color-accent-300:#c0d5f8;--color-accent-400:#90b4ec;--color-accent-500:#5f8fd4;--color-accent-600:#4673b3;--color-accent-700:#35598c;--color-accent-800:#243f67;--color-accent-900:#172944;
+  --color-accent-2-100:#f1f6ff;--color-accent-2-200:#dde8fc;--color-accent-2-300:#c0d5f8;--color-accent-2-400:#9ab7e0;--color-accent-2-500:#7fa3d6;--color-accent-2-600:#6283b3;--color-accent-2-700:#48638c;--color-accent-2-800:#314467;--color-accent-2-900:#1f2c44;
+  --color-success:#4fb286;--color-danger-200:#f3c9c4;--color-danger-800:#4f2420;--color-success-200:#c3ead6;--color-success-800:#1d4636;--color-section:#123f6d;--color-section-glow:#1b5591;--color-section-ghost:#2d6cae;
+}
+html,body{margin:0;height:100%}
+body{font-size:14px;-webkit-font-smoothing:antialiased}
+a{color:var(--color-accent);}a:hover{color:var(--color-accent-400);}
+@keyframes ovhDot{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes ovhRise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes ovhBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes ovhSpin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+
+<sc-if value="{{ isSplash }}" hint-placeholder-val="{{ true }}">
+  <div data-screen-label="01 Splash" style="position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 12vw;background:radial-gradient(120% 90% at 0% 100%, var(--color-section) 0%, var(--color-bg) 62%);overflow:hidden">
+    <div style="display:flex;align-items:baseline;gap:2px;font-size:clamp(64px,11vw,148px);font-weight:500;letter-spacing:-0.04em;line-height:1;color:var(--color-text);animation:ovhRise .7s ease-out both">
+      <span>O</span><span style="color:var(--color-accent);animation:ovhDot 1.4s ease-in-out infinite">.</span><span>V</span><span style="color:var(--color-accent);animation:ovhDot 1.4s .2s ease-in-out infinite">.</span><span>H</span><span style="color:var(--color-accent);animation:ovhDot 1.4s .4s ease-in-out infinite">.</span>
+    </div>
+    <div style="margin-top:var(--space-6);font-size:15px;color:var(--color-neutral-300);animation:ovhRise .7s .25s ease-out both">Une meilleure console pour vos serveurs, domaines et hébergements</div>
+    <div style="margin-top:var(--space-8);width:220px;height:2px;background:var(--color-neutral-800);border-radius:2px;overflow:hidden">
+      <div style="height:100%;background:var(--color-accent);transform-origin:left;animation:ovhBar {{ splashDur }} ease-in-out both"></div>
+    </div>
+    <div style="margin-top:var(--space-3);font-size:12px;color:var(--color-neutral-400)">Chargement de vos produits…</div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="02 Connexion" style="position:fixed;inset:0;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);background:var(--color-bg)">
+    <div style="display:flex;flex-direction:column;justify-content:space-between;padding:var(--space-8) clamp(24px,7vw,96px)">
+      <div style="display:flex;align-items:baseline;font-size:20px;font-weight:500;letter-spacing:-0.02em">O<span style="color:var(--color-accent)">.</span>V<span style="color:var(--color-accent)">.</span>H<span style="color:var(--color-accent)">.</span></div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-4);max-width:420px;animation:ovhRise .5s ease-out both">
+        <div class="card-kicker">Espace client</div>
+        <h1 style="margin:0;font-size:40px;line-height:1.1;letter-spacing:-0.02em">Tous vos produits,<br>une seule console.</h1>
+        <p style="margin:0;color:var(--color-neutral-300);line-height:1.55;text-wrap:pretty">Serveurs, domaines, hébergements et services cloud, réunis au même endroit.</p>
+        <div style="display:flex;gap:var(--space-3);margin-top:var(--space-6)">
+          <button class="btn btn-primary" onClick="{{ login }}" disabled="{{ loggingIn }}" style="white-space:nowrap;min-height:44px;padding:0 20px;font-size:14px;display:flex;align-items:center;gap:10px">
+            <sc-if value="{{ loggingIn }}" hint-placeholder-val="{{ false }}"><i class="ph ph-circle-notch" style="font-size:18px;animation:ovhSpin .8s linear infinite"></i></sc-if>
+            <sc-if value="{{ notLoggingIn }}" hint-placeholder-val="{{ true }}"><i class="ph ph-sign-in" style="font-size:18px"></i></sc-if>
+            <span style="white-space:nowrap">{{ loginLabel }}</span>
+          </button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--color-neutral-400)">Console indépendante · Mentions légales · Confidentialité</div>
+    </div>
+    <div style="position:relative;overflow:hidden;background:radial-gradient(90% 80% at 100% 0%, var(--color-section-glow) 0%, var(--color-section) 35%, var(--color-bg) 85%)">
+      <div style="position:absolute;left:12%;bottom:14%;font-size:clamp(72px,11vw,180px);font-weight:500;letter-spacing:-0.05em;line-height:.8;color:var(--color-section-ghost);opacity:.35">O.V.H.</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isApp }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="03 Console" style="position:fixed;inset:0;display:grid;grid-template-columns:248px minmax(0,1fr);background:var(--color-bg)">
+    <aside style="display:flex;flex-direction:column;gap:var(--space-6);padding:var(--space-6) var(--space-4);background:linear-gradient(180deg,var(--color-surface) 0%,var(--color-bg) 100%);border-right:1px solid var(--color-divider);min-height:0">
+      <div style="display:flex;align-items:baseline;padding:0 var(--space-3);font-size:18px;font-weight:500;letter-spacing:-0.02em">O<span style="color:var(--color-accent)">.</span>V<span style="color:var(--color-accent)">.</span>H<span style="color:var(--color-accent)">.</span></div>
+      <nav style="display:flex;flex-direction:column;gap:2px;overflow:auto;flex:1">
+        <div style="padding:0 var(--space-3) var(--space-2);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-400)">Mes produits</div>
+        <sc-for list="{{ sections }}" as="s" hint-placeholder-count="4">
+          <button onClick="{{ s.select }}" style="position:relative;display:flex;align-items:center;gap:10px;width:100%;min-height:36px;padding:0 var(--space-3);border:0;border-radius:var(--radius-md);background:{{ s.bg }};color:{{ s.color }};font:inherit;font-size:14px;text-align:left;cursor:pointer" style-hover="background:color-mix(in srgb, var(--color-text) 6%, transparent)">
+            <span style="position:absolute;left:0;top:9px;bottom:9px;width:2px;border-radius:2px;background:{{ s.mark }}"></span>
+            <i class="ph {{ s.icon }}" style="font-size:18px"></i>
+            <span style="flex:1">{{ s.label }}</span>
+            <span style="font-size:12px;color:var(--color-neutral-400)">{{ s.count }}</span>
+          </button>
+        </sc-for>
+      </nav>
+      <div style="display:flex;align-items:center;gap:10px;padding:var(--space-3);border-radius:var(--radius-md);background:color-mix(in srgb, var(--color-text) 4%, transparent)">
+        <div style="width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--color-accent-800);color:var(--color-accent-100);font-size:12px;font-weight:500">CM</div>
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+          <span style="font-size:13px">Camille Martin</span>
+          <span style="font-size:11px;color:var(--color-neutral-400)">cm42187-ovh</span>
+        </div>
+        <button class="btn btn-ghost btn-icon" onClick="{{ logout }}" title="Se déconnecter" style="white-space:nowrap;width:32px;height:32px;color:var(--color-neutral-300)"><i class="ph ph-sign-out" style="font-size:18px"></i></button>
+      </div>
+    </aside>
+
+    <main style="display:flex;flex-direction:column;min-width:0;min-height:0;overflow:auto">
+      <header style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4);padding:var(--space-6) clamp(20px,4vw,48px);border-bottom:1px solid var(--color-divider)">
+        <div style="position:relative">
+          <button onClick="{{ pk.toggle }}" aria-haspopup="listbox" aria-expanded="{{ pk.open }}" style="display:flex;align-items:center;gap:10px;min-width:320px;min-height:40px;padding:0 10px 0 12px;border:1px solid {{ pk.border }};border-radius:var(--radius-md);background:var(--color-surface);color:var(--color-text);font:inherit;font-size:14px;font-weight:500;cursor:pointer;text-align:left" style-hover="border-color:color-mix(in srgb, var(--color-text) 45%, transparent)">
+            <i class="ph {{ cur.icon }}" style="font-size:16px;color:var(--color-neutral-300)"></i>
+            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ item.name }}</span>
+            <span style="display:flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:var(--radius-sm);border:1px solid var(--color-divider);font-size:11px;font-weight:400;color:var(--color-neutral-400)">/</span>
+            <i class="ph ph-caret-up-down" style="color:var(--color-neutral-400)"></i>
+          </button>
+          <sc-if value="{{ pk.open }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ pk.close }}" style="position:fixed;inset:0;z-index:20"></div>
+            <div role="listbox" style="position:absolute;top:calc(100% + 6px);left:0;z-index:21;width:max(100%,420px);display:flex;flex-direction:column;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-lg);overflow:hidden;animation:ovhRise .15s ease-out both">
+              <div style="display:flex;align-items:center;gap:10px;padding:0 var(--space-6);border-bottom:1px solid var(--color-divider)">
+                <i class="ph ph-magnifying-glass" style="font-size:16px;color:var(--color-neutral-400)"></i>
+                <input value="{{ pk.q }}" onChange="{{ pk.onQ }}" onKeyDown="{{ pk.onKey }}" autoFocus="{{ true }}" placeholder="{{ pk.placeholder }}" style="flex:1;min-height:44px;border:0;outline:0;background:transparent;color:var(--color-text);font:inherit;font-size:14px;caret-color:var(--color-accent)">
+                <span style="font-size:12px;color:var(--color-neutral-400);font-variant-numeric:tabular-nums">{{ pk.countLabel }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:2px;max-height:320px;overflow:auto;padding:var(--space-2)">
+                <sc-for list="{{ pk.rows }}" as="o" hint-placeholder-count="3">
+                  <button role="option" aria-selected="{{ o.current }}" onClick="{{ o.pick }}" onMouseEnter="{{ o.hover }}" style="display:flex;align-items:center;gap:var(--space-4);width:100%;padding:8px 10px;border:0;border-radius:var(--radius-md);background:{{ o.bg }};color:var(--color-text);font:inherit;text-align:left;cursor:pointer">
+                    <span style="width:6px;height:6px;flex:none;border-radius:50%;background:{{ o.dot }}"></span>
+                    <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                      <span style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ o.pre }}<mark style="background:transparent;color:var(--color-accent-300);text-decoration:underline;text-underline-offset:3px">{{ o.hit }}</mark>{{ o.post }}</span>
+                      <span style="font-size:12px;color:var(--color-neutral-400);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ o.offer }}</span>
+                    </span>
+                    <sc-if value="{{ o.warn }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline">{{ o.status }}</span></sc-if>
+                    <sc-if value="{{ o.current }}" hint-placeholder-val="{{ false }}"><i class="ph ph-check" style="font-size:16px;color:var(--color-accent)"></i></sc-if>
+                  </button>
+                </sc-for>
+                <sc-if value="{{ pk.empty }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:var(--space-6) 10px;font-size:13px;color:var(--color-neutral-400)">Aucun résultat pour « {{ pk.q }} »</div>
+                </sc-if>
+              </div>
+              <div style="display:flex;gap:var(--space-6);padding:8px var(--space-6);border-top:1px solid var(--color-divider);font-size:11px;color:var(--color-neutral-400)">
+                <span>↑ ↓ naviguer</span><span>↵ ouvrir</span><span>échap fermer</span>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </header>
+
+      <div style="display:flex;flex-direction:column;gap:var(--space-8);padding:var(--space-8) clamp(20px,4vw,48px);animation:ovhRise .35s ease-out both" key="{{ selId }}">
+
+        <sc-if value="{{ notDomain }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:flex-end;flex-wrap:wrap;gap:var(--space-6);justify-content:space-between">
+          <h1 style="margin:0;min-width:0;font-size:30px;letter-spacing:-0.02em;line-height:1.15;word-break:break-all">{{ item.name }}</h1>
+          <div style="display:flex;align-items:center;gap:var(--space-3)">
+            <span class="tag {{ item.tagClass }}" style="background:{{ item.tagBg }};color:{{ item.tagColor }};border-color:{{ item.tagColor }}">{{ item.status }}</span>
+            <sc-for list="{{ cur.actions2 }}" as="a" hint-placeholder-count="1">
+              <button class="btn btn-secondary" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph {{ a.icon }}"></i>{{ a.label }}</button>
+            </sc-for>
+            <button class="btn btn-primary" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph {{ cur.primary.icon }}"></i>{{ cur.primary.label }}</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--space-4)">
+          <sc-for list="{{ item.infos }}" as="f" hint-placeholder-count="6">
+            <div class="card" style="gap:6px;padding:var(--space-4) var(--space-6)">
+              <div style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-neutral-400)">{{ f.k }}</div>
+              <div style="font-size:15px;font-weight:500;font-variant-numeric:tabular-nums;word-break:break-word">{{ f.v }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <section style="display:flex;flex-direction:column;gap:var(--space-4)">
+          <h2 style="margin:0;font-size:18px">{{ item.table.title }}</h2>
+          <div style="border-radius:var(--radius-md);background:var(--color-surface);overflow:auto">
+            <table class="table" style="width:100%">
+              <thead><tr><sc-for list="{{ item.table.cols }}" as="c" hint-placeholder-count="3"><th style="text-align:left">{{ c }}</th></sc-for></tr></thead>
+              <tbody>
+                <sc-for list="{{ item.table.rows }}" as="r" hint-placeholder-count="3">
+                  <tr><sc-for list="{{ r }}" as="cell" hint-placeholder-count="3"><td style="font-variant-numeric:tabular-nums">{{ cell }}</td></sc-for></tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        </sc-if>
+
+        <sc-if value="{{ isDomain }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4)">
+            <h1 style="margin:0;min-width:0;font-size:30px;letter-spacing:-0.02em;line-height:1.15;word-break:break-all">{{ item.name }}</h1>
+            <span class="tag {{ item.tagClass }}" style="background:{{ item.tagBg }};color:{{ item.tagColor }};border-color:{{ item.tagColor }}">{{ item.status }}</span>
+            <div style="flex:1"></div>
+            <sc-if value="{{ dm.hasActivity }}" hint-placeholder-val="{{ false }}">
+              <button class="btn btn-ghost" onClick="{{ dm.goOps }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--color-neutral-200)">
+                <sc-if value="{{ dm.hasRunning }}" hint-placeholder-val="{{ false }}"><i class="ph ph-circle-notch" style="font-size:15px;color:var(--color-accent);animation:ovhSpin 1s linear infinite"></i></sc-if>
+                <sc-if value="{{ dm.hasErrorOnly }}" hint-placeholder-val="{{ false }}"><i class="ph ph-warning" style="font-size:15px;color:var(--color-accent-300)"></i></sc-if>
+                <span>{{ dm.activityLabel }}</span>
+              </button>
+            </sc-if>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--space-4);margin:var(--space-3) 0">
+            <sc-for list="{{ dm.cards }}" as="f" hint-placeholder-count="5">
+              <button onClick="{{ f.go }}" class="card" style="gap:6px;padding:var(--space-4) var(--space-6);border:0;text-align:left;font:inherit;color:inherit;cursor:pointer" style-hover="background:color-mix(in srgb, var(--color-text) 5%, var(--color-surface))">
+                <div style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-neutral-400)">{{ f.k }}</div>
+                <div style="font-size:15px;font-weight:500;font-variant-numeric:tabular-nums;word-break:break-word;color:{{ f.color }}">{{ f.v }}</div>
+              </button>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ ns.viewing }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4);font-size:13px">
+              <span style="font-size:12px;color:var(--color-neutral-400)">Serveurs DNS</span>
+              <sc-for list="{{ ns.list }}" as="n" hint-placeholder-count="2">
+                <span title="{{ n.title }}" style="display:flex;align-items:center;gap:6px">
+                  <span style="width:6px;height:6px;border-radius:50%;background:{{ n.dot }}"></span>
+                  <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--color-neutral-200)">{{ n.host }}</span>
+                </span>
+              </sc-for>
+              <sc-if value="{{ ns.pending }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size:12px;color:var(--color-neutral-400)">Mise à jour en cours au registre…</span>
+              </sc-if>
+              <sc-if value="{{ ns.canEdit }}" hint-placeholder-val="{{ true }}">
+                <button class="btn btn-ghost btn-icon" onClick="{{ ns.edit }}" title="Modifier les serveurs DNS" style="white-space:nowrap;width:28px;height:28px;color:var(--color-neutral-300)"><i class="ph ph-pencil-simple" style="font-size:15px"></i></button>
+              </sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ ns.editing }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:var(--space-4);max-width:640px;padding:var(--space-6);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:inset 0 0 0 1px var(--color-accent-700)">
+              <div style="font-size:12px;color:var(--color-neutral-300);line-height:1.5">La liste envoyée remplace toute la configuration au registre. Un serveur retiré ici n’est plus déclaré.</div>
+              <sc-for list="{{ ns.drafts }}" as="n" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:var(--space-4)">
+                  <span style="width:84px;flex:none;font-size:12px;color:var(--color-neutral-400)">{{ n.label }}</span>
+                  <input class="input" value="{{ n.host }}" onChange="{{ n.onChange }}" onKeyDown="{{ ns.onKey }}" placeholder="ns1.exemple.fr" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                  <button class="btn btn-ghost btn-icon" onClick="{{ n.remove }}" disabled="{{ n.cantRemove }}" title="Retirer" style="white-space:nowrap;width:32px;height:32px;flex:none;color:var(--color-neutral-300)"><i class="ph ph-minus-circle" style="font-size:16px"></i></button>
+                </div>
+              </sc-for>
+              <sc-if value="{{ ns.canAdd }}" hint-placeholder-val="{{ false }}">
+                <div style="padding-left:calc(84px + var(--space-4))">
+                  <button class="btn btn-ghost" onClick="{{ ns.add }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Ajouter un second serveur</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ ns.hasError }}" hint-placeholder-val="{{ false }}">
+                <div style="padding-left:calc(84px + var(--space-4));font-size:12px;color:var(--color-accent-300)">{{ ns.error }}</div>
+              </sc-if>
+              <div style="display:flex;gap:var(--space-3);padding-left:calc(84px + var(--space-4))">
+                <button class="btn btn-primary" onClick="{{ ns.review }}" disabled="{{ ns.cantReview }}" style="white-space:nowrap">Vérifier les changements</button>
+                <button class="btn btn-secondary" onClick="{{ ns.cancel }}" style="white-space:nowrap">Annuler</button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ ns.confirming }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:var(--space-4);max-width:640px;padding:var(--space-6);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:inset 0 0 0 1px var(--color-accent-700)">
+              <div style="font-size:14px;font-weight:500">Nouvelle configuration des serveurs DNS</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <sc-for list="{{ ns.diff }}" as="x" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:var(--space-4);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:{{ x.color }}">
+                    <span style="width:14px;text-align:center">{{ x.sign }}</span>
+                    <span style="text-decoration:{{ x.deco }}">{{ x.host }}</span>
+                    <span style="font-family:var(--font-body);font-size:12px;color:var(--color-neutral-400)">{{ x.note }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="font-size:12px;color:var(--color-neutral-300)">La propagation au registre prend quelques minutes. Suivi dans Opérations.</div>
+              <div style="display:flex;gap:var(--space-3)">
+                <button class="btn btn-primary" onClick="{{ ns.apply }}" style="white-space:nowrap">Appliquer</button>
+                <button class="btn btn-secondary" onClick="{{ ns.back }}" style="white-space:nowrap">Retour</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+        <div role="tablist" style="display:flex;gap:var(--space-6);border-bottom:1px solid var(--color-divider);margin-bottom:calc(var(--space-2) * -1)">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+            <button role="tab" aria-selected="{{ t.on }}" onClick="{{ t.pick }}" style="display:flex;align-items:center;gap:8px;min-height:40px;padding:0;border:0;border-bottom:2px solid {{ t.line }};margin-bottom:-1px;background:transparent;color:{{ t.color }};font:inherit;font-size:14px;cursor:pointer" style-hover="color:var(--color-text)">
+              <span>{{ t.label }}</span>
+              <sc-if value="{{ t.hasN }}" hint-placeholder-val="{{ false }}"><span class="tag tag-accent" style="font-size:11px;padding:0 6px">{{ t.n }}</span></sc-if>
+            </button>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ tab.zone }}" hint-placeholder-val="{{ true }}">
+        <section style="display:flex;flex-direction:column;gap:var(--space-4)">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)">
+            <div style="position:relative;display:flex;align-items:center">
+              <i class="ph ph-magnifying-glass" style="position:absolute;left:10px;font-size:15px;color:var(--color-neutral-400);pointer-events:none"></i>
+              <input class="input" value="{{ z.q }}" onChange="{{ z.onQ }}" placeholder="Sous-domaine ou cible" style="padding-left:32px;width:240px;font-size:13px">
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              <sc-for list="{{ z.chips }}" as="c" hint-placeholder-count="5">
+                <button onClick="{{ c.pick }}" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid {{ c.border }};border-radius:var(--radius-md);background:{{ c.bg }};color:{{ c.color }};font:inherit;font-size:12px;cursor:pointer">
+                  <span>{{ c.label }}</span><span style="color:var(--color-neutral-400);font-variant-numeric:tabular-nums">{{ c.n }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="flex:1"></div>
+            <button class="btn btn-primary" onClick="{{ z.add }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Ajouter un enregistrement</button>
+          </div>
+
+          <sc-if value="{{ z.hasPending }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4);padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);background:color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));box-shadow:inset 0 0 0 1px var(--color-accent-700);animation:ovhRise .2s ease-out both">
+              <i class="ph ph-note-pencil" style="font-size:20px;color:var(--color-accent)"></i>
+              <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:2px">
+                <span style="font-size:14px;font-weight:500">{{ z.pendingLabel }}</span>
+                <span style="font-size:12px;color:var(--color-neutral-300)">Elles ne sont pas servies tant que la zone n’est pas publiée.</span>
+              </div>
+              <button class="btn btn-ghost" onClick="{{ z.discard }}" style="white-space:nowrap">Tout annuler</button>
+              <button class="btn btn-primary" onClick="{{ z.publish }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-upload-simple"></i>Publier la zone</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ z.deploying }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--color-neutral-300)"><i class="ph ph-circle-notch" style="font-size:14px;color:var(--color-accent);animation:ovhSpin 1s linear infinite"></i>Publication de la zone en cours…</div>
+          </sc-if>
+          <sc-if value="{{ z.upToDate }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--color-neutral-400)"><span style="width:6px;height:6px;border-radius:50%;background:var(--color-accent)"></span>Zone publiée : ce qui est affiché est ce qui est servi.</div>
+          </sc-if>
+
+          <div style="border-radius:var(--radius-md);background:var(--color-surface);overflow:auto">
+            <table class="table" style="width:100%">
+              <thead><tr>
+                <th style="text-align:left;width:24%">Sous-domaine</th>
+                <th style="text-align:left;width:130px">Type</th>
+                <th style="text-align:left;width:110px">TTL</th>
+                <th style="text-align:left">Cible</th>
+                <th style="width:92px"></th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ z.rows }}" as="r" hint-placeholder-count="4">
+                  <sc-if value="{{ r.editing }}" hint-placeholder-val="{{ false }}">
+                    <tr style="background:color-mix(in srgb, var(--color-accent) 7%, transparent)">
+                      <td><input class="input" value="{{ r.d.sub }}" onChange="{{ r.onSub }}" onKeyDown="{{ r.onKey }}" placeholder="@" autoFocus="{{ true }}" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px"></td>
+                      <td>
+                        <sc-if value="{{ r.typeFixed }}" hint-placeholder-val="{{ false }}">
+                          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px">
+                            <span class="tag tag-neutral" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace">{{ r.d.type }}</span>
+                            <button onClick="{{ r.startChange }}" style="padding:0;border:0;background:none;color:var(--color-accent-300);font:inherit;font-size:11px;cursor:pointer;text-decoration:underline;text-underline-offset:2px">Changer le type</button>
+                          </div>
+                        </sc-if>
+                        <sc-if value="{{ r.typeSelect }}" hint-placeholder-val="{{ true }}">
+                          <select class="input" value="{{ r.d.type }}" onChange="{{ r.onType }}" style="font-size:13px;cursor:pointer">
+                            <sc-for list="{{ r.typeOpts }}" as="t" hint-placeholder-count="6"><option value="{{ t.v }}" selected="{{ t.sel }}">{{ t.label }}</option></sc-for>
+                          </select>
+                        </sc-if>
+                      </td>
+                      <td><input class="input" value="{{ r.d.ttl }}" onChange="{{ r.onTtl }}" onKeyDown="{{ r.onKey }}" inputMode="numeric" placeholder="{{ r.ttlPh }}" title="En secondes. Vide : TTL de la zone." style="font-variant-numeric:tabular-nums;font-size:13px"></td>
+                      <td><input class="input" value="{{ r.d.target }}" onChange="{{ r.onTarget }}" onKeyDown="{{ r.onKey }}" placeholder="{{ r.hint }}" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px"></td>
+                      <td>
+                        <div style="display:flex;gap:4px;justify-content:flex-end">
+                          <button class="btn btn-primary btn-icon" onClick="{{ r.save }}" disabled="{{ r.invalid }}" title="Ajouter au brouillon (Entrée)" style="white-space:nowrap;width:32px;height:32px"><i class="ph ph-check" style="font-size:16px"></i></button>
+                          <button class="btn btn-secondary btn-icon" onClick="{{ r.cancel }}" title="Annuler (Échap)" style="white-space:nowrap;width:32px;height:32px"><i class="ph ph-x" style="font-size:16px"></i></button>
+                        </div>
+                      </td>
+                    </tr>
+                  </sc-if>
+                  <sc-if value="{{ r.changing }}" hint-placeholder-val="{{ false }}">
+                    <tr style="background:color-mix(in srgb, var(--color-accent) 7%, transparent)">
+                      <td colSpan="5" style="font-size:12px;color:var(--color-accent-200);line-height:1.5">
+                        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px">
+                          <i class="ph ph-warning" style="font-size:14px"></i>
+                          <span style="flex:1;min-width:240px">Le type d’un enregistrement ne se modifie pas. L’enregistrement {{ r.origType }} sera supprimé et un nouveau créé, avec un nouvel identifiant.</span>
+                          <button class="btn btn-ghost" onClick="{{ r.stopChange }}" style="white-space:nowrap;font-size:12px">Garder {{ r.origType }}</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </sc-if>
+                  <sc-if value="{{ r.hasErr }}" hint-placeholder-val="{{ false }}">
+                    <tr><td colSpan="5" style="font-size:12px;color:var(--color-accent-300)">{{ r.err }}</td></tr>
+                  </sc-if>
+                  <sc-if value="{{ r.viewing }}" hint-placeholder-val="{{ true }}">
+                    <tr style="opacity:{{ r.opacity }}">
+                      <td>
+                        <div style="display:flex;align-items:center;gap:8px">
+                          <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;text-decoration:{{ r.deco }}">{{ r.subLabel }}</span>
+                          <sc-if value="{{ r.hasBadge }}" hint-placeholder-val="{{ false }}"><span class="tag {{ r.badgeClass }}" style="font-size:10px;padding:0 6px">{{ r.badge }}</span></sc-if>
+                        </div>
+                      </td>
+                      <td>
+                        <div style="display:flex;align-items:center;gap:6px">
+                          <span class="tag tag-neutral" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace">{{ r.type }}</span>
+                          <sc-if value="{{ r.hasVia }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:var(--color-neutral-400)">{{ r.via }}</span></sc-if>
+                        </div>
+                      </td>
+                      <td style="font-variant-numeric:tabular-nums;font-size:13px;color:{{ r.ttlColor }}">{{ r.ttlLabel }}</td>
+                      <td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all;text-decoration:{{ r.deco }}">{{ r.target }}</td>
+                      <td>
+                        <div style="display:flex;gap:4px;justify-content:flex-end">
+                          <sc-if value="{{ r.canEdit }}" hint-placeholder-val="{{ true }}">
+                            <button class="btn btn-ghost btn-icon" onClick="{{ r.edit }}" title="Modifier" style="white-space:nowrap;width:32px;height:32px;color:var(--color-neutral-300)"><i class="ph ph-pencil-simple" style="font-size:16px"></i></button>
+                            <button class="btn btn-ghost btn-icon" onClick="{{ r.del }}" title="Supprimer" style="white-space:nowrap;width:32px;height:32px;color:var(--color-neutral-300)"><i class="ph ph-trash" style="font-size:16px"></i></button>
+                          </sc-if>
+                          <sc-if value="{{ r.canRestore }}" hint-placeholder-val="{{ false }}">
+                            <button class="btn btn-ghost btn-icon" onClick="{{ r.restore }}" title="{{ r.restoreTitle }}" style="white-space:nowrap;width:32px;height:32px;color:var(--color-neutral-200)"><i class="ph ph-arrow-counter-clockwise" style="font-size:16px"></i></button>
+                          </sc-if>
+                          <sc-if value="{{ r.isDyn }}" hint-placeholder-val="{{ false }}">
+                            <span title="Mis à jour par un client DynHost, non modifiable ici" style="display:grid;place-items:center;width:32px;height:32px;color:var(--color-neutral-400)"><i class="ph ph-lock-simple" style="font-size:16px"></i></span>
+                          </sc-if>
+                        </div>
+                      </td>
+                    </tr>
+                  </sc-if>
+                </sc-for>
+              </tbody>
+            </table>
+            <sc-if value="{{ z.empty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:var(--space-6);font-size:13px;color:var(--color-neutral-400)">Aucun enregistrement ne correspond au filtre.</div>
+            </sc-if>
+          </div>
+        </section>
+
+        <section style="display:flex;flex-direction:column;gap:var(--space-4)">
+          <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:var(--space-4)">
+            <h2 style="margin:0;font-size:16px">DynHost</h2>
+            <span style="font-size:12px;color:var(--color-neutral-400)">Identifiants qu’un routeur ou un NAS utilise pour mettre à jour son IP.</span>
+          </div>
+          <sc-if value="{{ dyn.off }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:10px;padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);border:1px dashed var(--color-divider);font-size:13px;color:var(--color-neutral-300)">
+              <i class="ph ph-prohibit" style="font-size:16px;color:var(--color-neutral-400)"></i>{{ dyn.reason }}
+            </div>
+          </sc-if>
+          <sc-if value="{{ dyn.on }}" hint-placeholder-val="{{ true }}">
+            <sc-if value="{{ dyn.hasReveal }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-6);border-radius:var(--radius-md);background:color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));box-shadow:inset 0 0 0 1px var(--color-accent-700);animation:ovhRise .2s ease-out both">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <i class="ph ph-key" style="font-size:18px;color:var(--color-accent)"></i>
+                  <span style="flex:1;font-size:14px;font-weight:500">{{ dyn.reveal.title }}</span>
+                  <button class="btn btn-secondary" onClick="{{ dyn.reveal.dismiss }}" style="white-space:nowrap">J’ai noté ces informations</button>
+                </div>
+                <div style="font-size:12px;color:var(--color-accent-200)">Le mot de passe n’est affiché qu’une fois. Il ne pourra pas être récupéré, seulement remplacé.</div>
+                <div style="display:flex;flex-direction:column;gap:6px;padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);background:var(--color-bg)">
+                  <div style="display:flex;align-items:center;gap:var(--space-4);min-width:0">
+                      <span style="width:110px;flex:none;font-size:12px;color:var(--color-neutral-400)">Serveur</span>
+                      <span style="flex:1;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all;color:var(--color-text)">{{ dyn.reveal.server }}</span>
+                      <button class="btn btn-ghost btn-icon" onClick="{{ dyn.reveal.copyServer }}" title="Copier" style="white-space:nowrap;width:28px;height:28px;flex:none;color:var(--color-neutral-300)"><i class="ph ph-copy" style="font-size:15px"></i></button>
+                    </div>
+                  <div style="display:flex;align-items:center;gap:var(--space-4);min-width:0">
+                      <span style="width:110px;flex:none;font-size:12px;color:var(--color-neutral-400)">Nom d’hôte</span>
+                      <span style="flex:1;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all;color:var(--color-text)">{{ dyn.reveal.host }}</span>
+                      <button class="btn btn-ghost btn-icon" onClick="{{ dyn.reveal.copyHost }}" title="Copier" style="white-space:nowrap;width:28px;height:28px;flex:none;color:var(--color-neutral-300)"><i class="ph ph-copy" style="font-size:15px"></i></button>
+                    </div>
+                  <div style="display:flex;align-items:center;gap:var(--space-4);min-width:0">
+                      <span style="width:110px;flex:none;font-size:12px;color:var(--color-neutral-400)">Identifiant</span>
+                      <span style="flex:1;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all;color:var(--color-text)">{{ dyn.reveal.login }}</span>
+                      <button class="btn btn-ghost btn-icon" onClick="{{ dyn.reveal.copyLogin }}" title="Copier" style="white-space:nowrap;width:28px;height:28px;flex:none;color:var(--color-neutral-300)"><i class="ph ph-copy" style="font-size:15px"></i></button>
+                    </div>
+                  <div style="display:flex;align-items:center;gap:var(--space-4);min-width:0">
+                      <span style="width:110px;flex:none;font-size:12px;color:var(--color-neutral-400)">Mot de passe</span>
+                      <span style="flex:1;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all;color:var(--color-text)">{{ dyn.reveal.pass }}</span>
+                      <button class="btn btn-ghost btn-icon" onClick="{{ dyn.reveal.copyPass }}" title="Copier" style="white-space:nowrap;width:28px;height:28px;flex:none;color:var(--color-neutral-300)"><i class="ph ph-copy" style="font-size:15px"></i></button>
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <span style="font-size:12px;color:var(--color-neutral-400)">Sans client intégré au routeur, une requête suffit :</span>
+                  <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);background:var(--color-bg)">
+                    <code style="flex:1;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;word-break:break-all;color:var(--color-neutral-200)">{{ dyn.reveal.curl }}</code>
+                    <button class="btn btn-ghost btn-icon" onClick="{{ dyn.reveal.copyCurl }}" title="Copier" style="white-space:nowrap;width:28px;height:28px;flex:none;color:var(--color-neutral-300)"><i class="ph ph-copy" style="font-size:15px"></i></button>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+            <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--color-surface)">
+              <sc-for list="{{ dyn.logins }}" as="l" hint-placeholder-count="1">
+                <div style="display:flex;flex-direction:column;border-bottom:1px solid var(--color-divider)">
+                  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-6);min-height:44px;padding:0 var(--space-4) 0 var(--space-6)">
+                    <span style="flex:1;min-width:200px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all">{{ l.login }}</span>
+                    <span style="font-size:12px;color:var(--color-neutral-400)">Sous-domaine autorisé</span>
+                    <span style="width:80px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">{{ l.sub }}</span>
+                    <span style="font-size:12px;color:var(--color-neutral-400)">{{ l.pwInfo }}</span>
+                    <div style="display:flex;gap:4px">
+                      <button class="btn btn-ghost" onClick="{{ l.pwEdit }}" style="white-space:nowrap;display:flex;align-items:center;gap:6px;font-size:13px"><i class="ph ph-key" style="font-size:15px"></i>Nouveau mot de passe</button>
+                      <button class="btn btn-ghost btn-icon" onClick="{{ l.del }}" title="Supprimer l’identifiant" style="white-space:nowrap;width:32px;height:32px;color:var(--color-neutral-300)"><i class="ph ph-trash" style="font-size:16px"></i></button>
+                    </div>
+                  </div>
+                  <sc-if value="{{ l.pwOpen }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3);padding:0 var(--space-6) var(--space-4)">
+                      <input class="input" value="{{ l.pw }}" onChange="{{ l.onPw }}" onKeyDown="{{ l.onPwKey }}" autoFocus="{{ true }}" placeholder="8 caractères minimum" style="width:240px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                      <button class="btn btn-ghost" onClick="{{ l.gen }}" style="white-space:nowrap;display:flex;align-items:center;gap:6px;font-size:13px"><i class="ph ph-shuffle" style="font-size:15px"></i>Générer</button>
+                      <button class="btn btn-primary" onClick="{{ l.pwSave }}" disabled="{{ l.pwInvalid }}" style="white-space:nowrap">Remplacer</button>
+                      <button class="btn btn-secondary" onClick="{{ l.pwCancel }}" style="white-space:nowrap">Annuler</button>
+                      <span style="font-size:12px;color:var(--color-neutral-400)">L’ancien mot de passe cesse de fonctionner immédiatement.</span>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+              <div style="display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-4) var(--space-6)">
+                <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)">
+                  <div style="display:flex;align-items:center;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-bg);overflow:hidden">
+                    <span style="padding:0 4px 0 10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--color-neutral-400);white-space:nowrap">{{ dyn.prefix }}</span>
+                    <input value="{{ dyn.suffix }}" onChange="{{ dyn.onSuffix }}" placeholder="suffixe" style="width:120px;min-height:34px;border:0;outline:0;background:transparent;color:var(--color-text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;caret-color:var(--color-accent)">
+                  </div>
+                  <input class="input" value="{{ dyn.sub }}" onChange="{{ dyn.onSub }}" placeholder="Sous-domaine, ou *" style="width:170px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <input class="input" value="{{ dyn.pass }}" onChange="{{ dyn.onPass }}" placeholder="Mot de passe (8 car. min.)" style="width:200px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                    <button class="btn btn-ghost btn-icon" onClick="{{ dyn.gen }}" title="Générer un mot de passe" style="white-space:nowrap;width:34px;height:34px;color:var(--color-neutral-300)"><i class="ph ph-shuffle" style="font-size:16px"></i></button>
+                  </div>
+                  <button class="btn btn-secondary" onClick="{{ dyn.create }}" disabled="{{ dyn.invalid }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Créer l’identifiant</button>
+                </div>
+                <div style="font-size:12px;color:var(--color-neutral-400)">Identifiant complet : <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--color-accent-300)">{{ dyn.preview }}</span> · le nom du domaine est ajouté automatiquement devant le suffixe. C’est avec cet identifiant et le mot de passe que l’appareil qui met à jour l’IP (box, NAS, script) s’authentifie.</div>
+              </div>
+            </div>
+          </sc-if>
+        </section>
+        </sc-if>
+
+        <sc-if value="{{ tab.reg }}" hint-placeholder-val="{{ false }}">
+        <section style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--color-surface)">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4);padding:var(--space-4) var(--space-6)">
+            <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:2px">
+              <span style="font-size:14px;font-weight:500">Protection contre le transfert</span>
+              <span style="font-size:12px;color:var(--color-neutral-400)">{{ reg.lock.desc }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:var(--space-4)">
+              <span style="font-size:13px;color:var(--color-neutral-300)">{{ reg.lock.label }}</span>
+              <button role="switch" aria-checked="{{ reg.lock.on }}" aria-label="{{ reg.lock.aria }}" onClick="{{ reg.lock.toggle }}" disabled="{{ reg.lock.disabled }}" style="position:relative;width:40px;height:22px;flex:none;padding:0;border:1px solid {{ reg.lock.trackBorder }};border-radius:11px;background:{{ reg.lock.track }};cursor:{{ reg.lock.cursor }};opacity:{{ reg.lock.opacity }};transition:background .15s,border-color .15s">
+                <span style="position:absolute;top:2px;left:{{ reg.lock.knobLeft }};width:16px;height:16px;border-radius:50%;background:{{ reg.lock.knob }};transition:left .15s"></span>
+              </button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4);padding:var(--space-4) var(--space-6);border-top:1px solid var(--color-divider)">
+            <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:2px">
+              <span style="font-size:14px;font-weight:500">DNSSEC</span>
+              <span style="font-size:12px;color:var(--color-neutral-400)">{{ reg.dnssec.desc }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:var(--space-4)">
+              <span style="font-size:13px;color:var(--color-neutral-300)">{{ reg.dnssec.label }}</span>
+              <button role="switch" aria-checked="{{ reg.dnssec.on }}" aria-label="{{ reg.dnssec.aria }}" onClick="{{ reg.dnssec.toggle }}" disabled="{{ reg.dnssec.disabled }}" style="position:relative;width:40px;height:22px;flex:none;padding:0;border:1px solid {{ reg.dnssec.trackBorder }};border-radius:11px;background:{{ reg.dnssec.track }};cursor:{{ reg.dnssec.cursor }};opacity:{{ reg.dnssec.opacity }};transition:background .15s,border-color .15s">
+                <span style="position:absolute;top:2px;left:{{ reg.dnssec.knobLeft }};width:16px;height:16px;border-radius:50%;background:{{ reg.dnssec.knob }};transition:left .15s"></span>
+              </button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4);padding:var(--space-4) var(--space-6);border-top:1px solid var(--color-divider)">
+            <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:2px">
+              <span style="font-size:14px;font-weight:500">Renouvellement</span>
+              <span style="font-size:12px;color:var(--color-neutral-400)">{{ reg.renew.desc }}</span>
+            </div>
+            <div style="display:flex;border:1px solid var(--color-divider);border-radius:var(--radius-md);overflow:hidden">
+              <sc-for list="{{ reg.renew.modes }}" as="m" hint-placeholder-count="2">
+                <button onClick="{{ m.pick }}" style="padding:7px 12px;border:0;background:{{ m.bg }};box-shadow:{{ m.ring }};color:{{ m.color }};font:inherit;font-size:13px;cursor:pointer">{{ m.label }}</button>
+              </sc-for>
+            </div>
+            <select class="input" value="{{ reg.renew.period }}" onChange="{{ reg.renew.onPeriod }}" style="width:110px;font-size:13px;cursor:pointer">
+              <sc-for list="{{ reg.renew.periods }}" as="p" hint-placeholder-count="4"><option value="{{ p.v }}" selected="{{ p.sel }}">{{ p.label }}</option></sc-for>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4);padding:var(--space-4) var(--space-6);border-top:1px solid var(--color-divider)">
+            <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:2px">
+              <span style="font-size:14px;font-weight:500">Supprimer le domaine à l’échéance</span>
+              <span style="font-size:12px;color:var(--color-neutral-400)">{{ reg.del.desc }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:var(--space-4)">
+              <span style="font-size:13px;color:var(--color-neutral-300)">{{ reg.del.label }}</span>
+              <button role="switch" aria-checked="{{ reg.del.on }}" aria-label="{{ reg.del.aria }}" onClick="{{ reg.del.toggle }}" disabled="{{ reg.del.disabled }}" style="position:relative;width:40px;height:22px;flex:none;padding:0;border:1px solid {{ reg.del.trackBorder }};border-radius:11px;background:{{ reg.del.track }};cursor:{{ reg.del.cursor }};opacity:{{ reg.del.opacity }};transition:background .15s,border-color .15s">
+                <span style="position:absolute;top:2px;left:{{ reg.del.knobLeft }};width:16px;height:16px;border-radius:50%;background:{{ reg.del.knob }};transition:left .15s"></span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section style="display:flex;flex-direction:column;gap:var(--space-4)">
+          <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:var(--space-4)">
+            <h2 style="margin:0;font-size:16px">Glue records</h2>
+            <span style="font-size:12px;color:var(--color-neutral-400)">Publient l’IP d’un serveur DNS situé dans ce domaine.</span>
+          </div>
+          <sc-if value="{{ glue.off }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:10px;padding:var(--space-4) var(--space-6);border-radius:var(--radius-md);border:1px dashed var(--color-divider);font-size:13px;color:var(--color-neutral-300)">
+              <i class="ph ph-prohibit" style="font-size:16px;color:var(--color-neutral-400)"></i>{{ glue.reason }}
+            </div>
+          </sc-if>
+          <sc-if value="{{ glue.on }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--color-surface)">
+              <sc-for list="{{ glue.items }}" as="g" hint-placeholder-count="1">
+                <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-6);min-height:44px;padding:0 var(--space-4) 0 var(--space-6);border-bottom:1px solid var(--color-divider);opacity:{{ g.opacity }}">
+                  <span style="width:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">{{ g.host }}</span>
+                  <span style="flex:1;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--color-neutral-200)">{{ g.ips }}</span>
+                  <sc-if value="{{ g.pending }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:var(--color-neutral-400)">{{ g.pendingLabel }}</span></sc-if>
+                  <sc-if value="{{ g.idle }}" hint-placeholder-val="{{ true }}">
+                    <button class="btn btn-ghost btn-icon" onClick="{{ g.del }}" title="Supprimer" style="white-space:nowrap;width:32px;height:32px;color:var(--color-neutral-300)"><i class="ph ph-trash" style="font-size:16px"></i></button>
+                  </sc-if>
+                </div>
+              </sc-for>
+              <div style="display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-4) var(--space-6)">
+                <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)">
+                  <input class="input" value="{{ glue.host }}" onChange="{{ glue.onHost }}" placeholder="{{ glue.hostPh }}" style="width:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                  <input class="input" value="{{ glue.ips }}" onChange="{{ glue.onIps }}" placeholder="{{ glue.ipsPh }}" style="flex:1;min-width:200px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                  <button class="btn btn-secondary" onClick="{{ glue.add }}" disabled="{{ glue.invalid }}" style="white-space:nowrap;display:flex;align-items:center;gap:8px"><i class="ph ph-plus"></i>Ajouter</button>
+                </div>
+                <sc-if value="{{ glue.hasErr }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--color-accent-300)">{{ glue.err }}</div></sc-if>
+                <div style="font-size:12px;color:var(--color-neutral-400)">{{ glue.capNote }}</div>
+              </div>
+            </div>
+          </sc-if>
+        </section>
+        </sc-if>
+
+        <sc-if value="{{ tab.contacts }}" hint-placeholder-val="{{ false }}">
+        <section style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--color-surface)">
+          <sc-for list="{{ ct.rows }}" as="c" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-6);padding:var(--space-4) var(--space-6);border-top:{{ c.border }}">
+              <div style="width:170px;display:flex;flex-direction:column;gap:2px">
+                <span style="font-size:14px;font-weight:500">{{ c.role }}</span>
+                <span style="font-size:12px;color:var(--color-neutral-400)">{{ c.hint }}</span>
+              </div>
+              <sc-if value="{{ c.viewing }}" hint-placeholder-val="{{ true }}">
+                <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:14px">{{ c.name }}</span>
+                  <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--color-neutral-400)">{{ c.nic }}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ c.editing }}" hint-placeholder-val="{{ false }}">
+                <div style="flex:1;min-width:180px;display:flex;align-items:center;gap:var(--space-3)">
+                  <input class="input" value="{{ c.draft }}" onChange="{{ c.onDraft }}" onKeyDown="{{ c.onKey }}" autoFocus="{{ true }}" placeholder="identifiant-ovh" style="width:200px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px">
+                  <button class="btn btn-primary" onClick="{{ c.save }}" disabled="{{ c.invalid }}" style="white-space:nowrap">Demander</button>
+                  <button class="btn btn-secondary" onClick="{{ c.cancel }}" style="white-space:nowrap">Annuler</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ c.pending }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:var(--color-neutral-400)">Changement en attente de validation</span></sc-if>
+              <sc-if value="{{ c.canChange }}" hint-placeholder-val="{{ true }}"><button class="btn btn-secondary" onClick="{{ c.edit }}" style="white-space:nowrap">Changer</button></sc-if>
+              <sc-if value="{{ c.isOwner }}" hint-placeholder-val="{{ false }}">
+                <span style="max-width:320px;font-size:12px;line-height:1.5;color:var(--color-neutral-300)">Le propriétaire ne se change pas ici : c’est une procédure de changement de titulaire auprès du registre.</span>
+              </sc-if>
+            </div>
+          </sc-for>
+        </section>
+        </sc-if>
+
+        <sc-if value="{{ tab.ops }}" hint-placeholder-val="{{ false }}">
+        <section style="display:flex;flex-direction:column;gap:var(--space-4)">
+          <div style="border-radius:var(--radius-md);background:var(--color-surface);overflow:auto">
+            <table class="table" style="width:100%;min-width:760px">
+              <thead><tr>
+                <th style="text-align:left">Opération</th>
+                <th style="text-align:left;white-space:nowrap">Statut</th>
+                <th style="text-align:left;white-space:nowrap">Demandée</th>
+                <th style="text-align:left;white-space:nowrap">Terminée</th>
+                <th></th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ ops.rows }}" as="o" hint-placeholder-count="3">
+                  <tr>
+                    <td>
+                      <div style="display:flex;flex-direction:column;gap:4px">
+                        <span style="font-size:14px">{{ o.fn }}</span>
+                        <sc-if value="{{ o.hasNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;line-height:1.5;color:{{ o.noteColor }}">{{ o.note }}</span></sc-if>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="tag" style="display:inline-flex;align-items:center;gap:6px;background:{{ o.tagBg }};color:{{ o.tagColor }}">
+                        <sc-if value="{{ o.running }}" hint-placeholder-val="{{ false }}"><i class="ph ph-circle-notch" style="font-size:12px;animation:ovhSpin 1s linear infinite"></i></sc-if>
+                        <sc-if value="{{ o.hasIcon }}" hint-placeholder-val="{{ false }}"><i class="ph {{ o.tagIcon }}" style="font-size:12px"></i></sc-if>
+                        {{ o.statusLabel }}
+                      </span>
+                    </td>
+                    <td style="font-size:13px;color:var(--color-neutral-300);font-variant-numeric:tabular-nums;white-space:nowrap"><span title="{{ o.createdTitle }}">{{ o.created }}</span></td>
+                    <td style="font-size:13px;color:var(--color-neutral-300);font-variant-numeric:tabular-nums;white-space:nowrap"><span title="{{ o.doneTitle }}">{{ o.done }}</span></td>
+                    <td>
+                      <div style="display:flex;gap:4px;justify-content:flex-end">
+                        <sc-if value="{{ o.canAccelerate }}" hint-placeholder-val="{{ false }}"><button class="btn btn-ghost" onClick="{{ o.accelerate }}" style="white-space:nowrap;font-size:13px">Accélérer</button></sc-if>
+                        <sc-if value="{{ o.canCancel }}" hint-placeholder-val="{{ false }}"><button class="btn btn-ghost" onClick="{{ o.cancel }}" style="white-space:nowrap;font-size:13px">Annuler</button></sc-if>
+                        <sc-if value="{{ o.canRelaunch }}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary" onClick="{{ o.relaunch }}" style="white-space:nowrap;font-size:13px">Relancer</button></sc-if>
+                      </div>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+            <sc-if value="{{ ops.empty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:var(--space-6);font-size:13px;color:var(--color-neutral-400)">Aucune opération sur ce domaine.</div>
+            </sc-if>
+          </div>
+        </section>
+        </sc-if>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+        <div style="position:fixed;right:var(--space-8);bottom:var(--space-8);z-index:30;display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-4) var(--space-3) var(--space-6);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-md);font-size:13px;animation:ovhRise .25s ease-out both">
+          <i class="ph ph-check-circle" style="font-size:18px;color:var(--color-accent)"></i>
+          <span>{{ toast.msg }}</span>
+          <sc-if value="{{ toast.canUndo }}" hint-placeholder-val="{{ false }}">
+            <button class="btn btn-ghost" onClick="{{ toast.undo }}" style="white-space:nowrap">Annuler</button>
+          </sc-if>
+        </div>
+      </sc-if>
+    </main>
+  </div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;profile&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Complet&quot;,&quot;Sans serveur dédié&quot;,&quot;Un seul domaine&quot;],&quot;default&quot;:&quot;Complet&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Client&quot;},&quot;skipSplash&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Parcours&quot;,&quot;label&quot;:&quot;Passer le chargement après connexion&quot;},&quot;splashSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:1,&quot;max&quot;:6,&quot;step&quot;:0.2,&quot;unit&quot;:&quot;s&quot;,&quot;default&quot;:2.2,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Parcours&quot;}}">
+const T = (title, cols, rows) => ({ title, cols, rows });
+const DATA = {
+  dedicated: { label: 'Serveurs dédiés', icon: 'ph-hard-drives',
+    primary: { label: 'Redémarrer', icon: 'ph-arrow-clockwise' }, actions2: [{ label: 'Réinstaller', icon: 'ph-disc' }],
+    items: [
+      { id: 'ns3124578.ip-51-91-24.eu', offer: 'Advance-2 · Gravelines (GRA2)', status: 'En service', ok: true,
+        infos: [['Processeur', 'AMD EPYC 4344P · 8c/16t'], ['Mémoire', '64 Go DDR5 ECC'], ['Stockage', '2 × 960 Go NVMe'], ['Système', 'Debian 12'], ['IPv4', '51.91.24.137'], ['Renouvellement', '12 nov. 2026']],
+        table: T('Adresses IP', ['Adresse', 'Type', 'Reverse'], [['51.91.24.137', 'IPv4 principale', 'ns3124578.ip-51-91-24.eu'], ['2001:41d0:305:2100::1', 'IPv6', '—'], ['54.38.12.200/30', 'Additional IP', 'mail.atelier-martin.fr']]) },
+      { id: 'ns5019932.ip-141-94-8.eu', offer: 'Rise-1 · Roubaix (RBX8)', status: 'En service', ok: true,
+        infos: [['Processeur', 'Intel Xeon-E 2386G · 6c/12t'], ['Mémoire', '32 Go DDR4 ECC'], ['Stockage', '2 × 512 Go NVMe'], ['Système', 'Proxmox VE 8'], ['IPv4', '141.94.8.52'], ['Renouvellement', '3 fév. 2027']],
+        table: T('Adresses IP', ['Adresse', 'Type', 'Reverse'], [['141.94.8.52', 'IPv4 principale', 'ns5019932.ip-141-94-8.eu'], ['2001:41d0:700:3434::1', 'IPv6', '—']]) },
+    ] },
+  vps: { label: 'VPS', icon: 'ph-cube',
+    primary: { label: 'Console KVM', icon: 'ph-terminal-window' }, actions2: [{ label: 'Snapshot', icon: 'ph-camera' }],
+    items: [
+      { id: 'vps-8f21c4a0.vps.ovh.net', offer: 'VPS-2 · Strasbourg (SBG)', status: 'En service', ok: true,
+        infos: [['vCores', '6'], ['Mémoire', '12 Go'], ['Stockage', '100 Go NVMe'], ['Système', 'Ubuntu 24.04'], ['IPv4', '57.128.44.19'], ['Renouvellement', '1 oct. 2026']],
+        table: T('Snapshots', ['Nom', 'Date', 'Taille'], [['avant-maj-php', '18 sept. 2026', '14,2 Go']]) },
+    ] },
+  domains: { label: 'Domaines', icon: 'ph-globe-simple', primary: {}, actions2: [],
+    items: [
+      { id: 'atelier-martin.fr', offer: '.fr · Renouvellement automatique', status: 'Actif', ok: true, infos: [] },
+      { id: 'martin-ceramique.com', offer: '.com · Renouvellement manuel', status: 'Expire bientôt', ok: false, infos: [] },
+      { id: 'cmartin.eu', offer: '.eu · Renouvellement automatique', status: 'Actif', ok: true, infos: [] },
+    ] },
+  hosting: { label: 'Hébergements web', icon: 'ph-browsers',
+    primary: { label: 'Accès FTP', icon: 'ph-folder-open' }, actions2: [{ label: 'Bases de données', icon: 'ph-database' }],
+    items: [
+      { id: 'atelierzz.cluster121.hosting.ovh.net', offer: 'Perso · Cluster 121', status: 'Actif', ok: true,
+        infos: [['Espace disque', '38 Go / 100 Go'], ['PHP', '8.3'], ['Bases de données', '1 / 1'], ['Certificat SSL', "Let's Encrypt"], ['Renouvellement', '14 mars 2027']],
+        table: T('Multisite', ['Domaine', 'Dossier racine', 'SSL'], [['atelier-martin.fr', 'www', 'Actif'], ['www.atelier-martin.fr', 'www', 'Actif']]) },
+    ] },
+  email: { label: 'E-mails', icon: 'ph-envelope-simple',
+    primary: { label: 'Créer une adresse', icon: 'ph-plus' }, actions2: [],
+    items: [
+      { id: 'MX Plan · atelier-martin.fr', offer: 'MX Plan 5 comptes', status: 'Actif', ok: true,
+        infos: [['Comptes', '3 / 5'], ['Stockage total', '4,1 Go'], ['Redirections', '2'], ['Webmail', 'Activé']],
+        table: T('Adresses', ['Adresse', 'Quota', 'Utilisé'], [['contact@atelier-martin.fr', '5 Go', '2,8 Go'], ['camille@atelier-martin.fr', '5 Go', '1,1 Go'], ['factures@atelier-martin.fr', '5 Go', '0,2 Go']]) },
+    ] },
+};
+const PROFILES = {
+  'Complet': { dedicated: 2, vps: 1, domains: 3, hosting: 1, email: 1 },
+  'Sans serveur dédié': { dedicated: 0, vps: 1, domains: 3, hosting: 1, email: 1 },
+  'Un seul domaine': { dedicated: 0, vps: 0, domains: 1, hosting: 1, email: 0 },
+};
+
+const CM = ['cm42187-ovh', 'Camille Martin'];
+const DOMS = {
+  'atelier-martin.fr': {
+    expiration: '14 mars 2027', renew: { mode: 'auto', period: 12, del: false }, periods: [12, 24, 36, 60, 120], canDel: true,
+    ns: [{ host: 'dns110.ovh.net', since: 'mars 2021' }, { host: 'ns110.ovh.net', since: 'mars 2021' }],
+    lock: 'locked', dnssec: 'enabled',
+    caps: { lock: true, dnssec: true, host: true, glueV6: true, multiIp: true, dynHost: true },
+    glue: [{ host: 'ns1.atelier-martin.fr', ips: ['51.91.24.137'] }],
+    contacts: { owner: CM, admin: CM, tech: ['tb8812-ovh', 'Thomas Bernard'], billing: CM },
+    zoneTtl: 3600,
+    records: [
+      { sub: '', type: 'A', ttl: null, target: '51.91.24.137' },
+      { sub: '', type: 'AAAA', ttl: null, target: '2001:41d0:305:2100::1' },
+      { sub: 'www', type: 'CNAME', ttl: null, target: 'atelier-martin.fr.' },
+      { sub: '', type: 'MX', ttl: 3600, target: '1 mx1.mail.ovh.net.' },
+      { sub: '', type: 'MX', ttl: 3600, target: '5 mx2.mail.ovh.net.' },
+      { sub: '', type: 'TXT', ttl: 600, target: '"v=spf1 include:mx.ovh.com ~all"', via: 'SPF' },
+      { sub: '_dmarc', type: 'TXT', ttl: null, target: '"v=DMARC1; p=quarantine; rua=mailto:dmarc@atelier-martin.fr"', via: 'DMARC' },
+      { sub: '', type: 'CAA', ttl: null, target: '0 issue "letsencrypt.org"' },
+    ],
+    dyn: [{ sub: 'nas', ip: '86.245.12.8', ttl: 60 }],
+    dynLogins: [{ login: 'atelier-martin.fr-nas', sub: 'nas', pwDate: '4 avr. 2025, 18:02' }],
+    tasks: [
+      { fn: 'Changement du contact technique', status: 'error', created: '19 sept. 2026, 09:40', comment: 'tb8812-ovh n’a pas validé la demande dans le délai de 7 jours.', canRelaunch: true },
+      { fn: 'Activation DNSSEC', status: 'done', created: '2 sept. 2026, 14:12', done: '2 sept. 2026, 14:19' },
+    ] },
+  'martin-ceramique.com': {
+    expiration: '8 oct. 2026', renew: { mode: 'manual', period: 12, del: false }, periods: [12, 24, 36, 60, 120], canDel: true,
+    ns: [{ host: 'dns17.ovh.net', since: 'juin 2023' }],
+    lock: 'unlocked', dnssec: 'disabled',
+    caps: { lock: true, dnssec: true, host: true, glueV6: true, multiIp: true, dynHost: true },
+    glue: [],
+    contacts: { owner: CM, admin: CM, tech: CM, billing: CM },
+    zoneTtl: 3600,
+    records: [
+      { sub: '', type: 'A', ttl: null, target: '57.128.44.19' },
+      { sub: 'www', type: 'CNAME', ttl: null, target: 'martin-ceramique.com.' },
+      { sub: '', type: 'MX', ttl: null, target: '1 mx1.mail.ovh.net.' },
+      { sub: '', type: 'TXT', ttl: null, target: '"google-site-verification=Qm8x…"' },
+    ],
+    dyn: [], dynLogins: [],
+    tasks: [
+      { fn: 'Renouvellement du domaine', status: 'todo', created: '25 sept. 2026, 08:00', todo: '1 oct. 2026', canAccelerate: true, canCancel: true },
+    ] },
+  'cmartin.eu': {
+    expiration: '22 juin 2027', renew: { mode: 'auto', period: 12, del: false }, periods: [12, 24, 36, 60, 120], canDel: false,
+    ns: [{ host: 'dns110.ovh.net', since: 'juin 2024' }, { host: 'ns110.ovh.net', since: 'juin 2024' }],
+    lock: 'unavailable', dnssec: 'enabled',
+    caps: { lock: false, dnssec: true, host: false, glueV6: false, multiIp: false, dynHost: false },
+    glue: [],
+    contacts: { owner: CM, admin: CM, tech: CM, billing: CM },
+    zoneTtl: 3600,
+    records: [
+      { sub: '', type: 'A', ttl: null, target: '51.91.24.137' },
+      { sub: 'www', type: 'CNAME', ttl: null, target: 'cmartin.eu.' },
+    ],
+    dyn: [], dynLogins: [], tasks: [] },
+};
+
+const RT = ['A', 'AAAA', 'CAA', 'CNAME', 'DKIM', 'DMARC', 'DNAME', 'HTTPS', 'LOC', 'MX', 'NAPTR', 'NS', 'PTR', 'RP', 'SPF', 'SRV', 'SSHFP', 'SVCB', 'TLSA', 'TXT'];
+const ALIAS = { SPF: 'TXT', DKIM: 'TXT', DMARC: 'TXT' };
+const HINTS = { A: '203.0.113.10', AAAA: '2001:db8::1', CAA: '0 issue "letsencrypt.org"', CNAME: 'cible.exemple.fr.', DKIM: 'v=DKIM1; k=rsa; p=MIIB…', DMARC: 'v=DMARC1; p=quarantine', DNAME: 'autre-zone.fr.', HTTPS: '1 . alpn="h2,h3"', MX: '10 mx.exemple.fr.', NS: 'ns1.exemple.fr.', PTR: 'hote.exemple.fr.', SPF: 'v=spf1 include:mx.ovh.com ~all', SRV: '10 5 443 cible.exemple.fr.', SVCB: '1 cible.exemple.fr.', TLSA: '3 1 1 a1b2c3…', TXT: '"texte libre"' };
+const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const now = () => { const d = new Date(); return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}, ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+const parseLbl = s => { const m = /^(\d+) (\S+) (\d{4}), (\d\d):(\d\d)$/.exec(s || ''); if (!m) return null; const mo = MONTHS.indexOf(m[2]); return mo < 0 ? null : new Date(+m[3], mo, +m[1], +m[4], +m[5]).getTime(); };
+const rel = ts => { const d = Date.now() - ts; if (ts == null || d < 0 || d >= 86400000) return null; const mn = Math.floor(d / 60000); if (mn < 1) return 'à l’instant'; if (mn < 60) return `il y a ${mn} min`; return `il y a ${Math.floor(mn / 60)} h`; };
+const fmtDur = s => s < 60 ? `${s} s` : s < 3600 ? `${Math.round(s / 60)} min` : s < 86400 ? `${Math.round(s / 3600)} h` : `${Math.round(s / 86400)} j`;
+const years = m => m % 12 ? `${m} mois` : `${m / 12} an${m > 12 ? 's' : ''}`;
+const same = (a, b) => a.sub === b.sub && a.type === b.type && a.ttl === b.ttl && a.target === b.target && (a.via || null) === (b.via || null);
+const HOST_RE = /^[a-z0-9-]+(\.[a-z0-9-]+)+\.?$/;
+const STATUS = {
+  done: ['Terminée', 'var(--color-success-800)', 'var(--color-success-200)', 'ph-check'],
+  doing: ['En cours', 'var(--color-accent-800)', 'var(--color-accent-100)', ''],
+  todo: ['Planifiée', 'var(--color-neutral-800)', 'var(--color-neutral-200)', 'ph-clock'],
+  error: ['Échec', 'var(--color-danger-800)', 'var(--color-danger-200)', 'ph-warning'],
+  problem: ['Problème', 'var(--color-danger-800)', 'var(--color-danger-200)', 'ph-warning'],
+  cancelled: ['Annulée', 'var(--color-neutral-800)', 'var(--color-neutral-400)', 'ph-x'],
+};
+
+class Component extends DCLogic {
+  state = { screen: 'login', loggingIn: false, section: null, sel: {}, dm: {}, tab: 'zone', editing: null, nsEdit: null, zf: { type: '', q: '' }, dynF: { suffix: '', sub: '', pass: '' }, dynReveal: null, dynPw: null, glueF: { host: '', ips: '' }, ctEdit: null, toast: null };
+  _timers = [];
+  _uid = 0;
+  uid(p) { this._uid += 1; return p + this._uid; }
+
+  seed(dom) {
+    const s = DOMS[dom];
+    const recs = s.records.map((r, i) => ({ id: dom + '#' + i, via: null, ...r }));
+    return { ...s, pub: recs, draft: recs, glue: s.glue.map((g, i) => ({ ...g, id: 'g' + i })), tasks: s.tasks.map((t, i) => ({ ...t, id: 's' + i })), contacts: { ...s.contacts }, renew: { ...s.renew }, ctPending: {} };
+  }
+  dom(d) { return this.state.dm[d] || this.seed(d); }
+  upd(d, fn) { this.setState(s => ({ dm: { ...s.dm, [d]: fn(s.dm[d] || this.seed(d)) } })); }
+  later(ms, fn) { this._timers.push(setTimeout(fn, ms)); }
+  finishTask(d, id, onDone) {
+    this.upd(d, x => { const y = onDone ? onDone(x) : x; return { ...y, tasks: y.tasks.map(t => t.id === id ? { ...t, status: 'done', done: now(), doneTs: Date.now(), canAccelerate: false, canCancel: false, canRelaunch: false, comment: null } : t) }; });
+  }
+  task(d, fn, onDone, ms = 2600) {
+    const id = this.uid('t');
+    this.upd(d, x => ({ ...x, tasks: [{ id, fn, status: 'doing', created: now(), createdTs: Date.now() }, ...x.tasks] }));
+    this.later(ms, () => this.finishTask(d, id, onDone));
+  }
+  showToast(msg, undo) {
+    clearTimeout(this.t3);
+    this.setState({ toast: { msg, undo } });
+    this.t3 = setTimeout(() => this.setState({ toast: null }), 5000);
+  }
+
+  nsVals(dom, x) {
+    const cur = x.ns.map(n => n.host);
+    const ed = this.state.nsEdit && this.state.nsEdit.dom === dom ? this.state.nsEdit : null;
+    const labels = ['Primaire', 'Secondaire'];
+    const setDraft = d => this.setState({ nsEdit: { dom, d, step: 'edit' } });
+    const cancel = () => this.setState({ nsEdit: null });
+    let error = '';
+    const clean = ed ? ed.d.map(h => h.trim().toLowerCase().replace(/\.$/, '')) : [];
+    if (ed) {
+      if (clean.some(h => !h)) error = 'Renseignez chaque serveur.';
+      else if (clean.some(h => !HOST_RE.test(h))) error = 'Nom d’hôte invalide.';
+      else if (clean.length === 2 && clean[0] === clean[1]) error = 'Les deux serveurs doivent être différents.';
+    }
+    const unchanged = ed && clean.length === cur.length && clean.every((h, i) => h === cur[i]);
+    const review = () => { if (ed && !error && !unchanged) this.setState({ nsEdit: { ...ed, step: 'confirm' } }); };
+    const diff = ed ? [
+      ...cur.map(h => clean.includes(h)
+        ? { sign: '', host: h, color: 'var(--color-neutral-200)', deco: 'none', note: 'inchangé' }
+        : { sign: '−', host: h, color: 'var(--color-neutral-400)', deco: 'line-through', note: 'ne sera plus déclaré' }),
+      ...clean.filter(h => !cur.includes(h)).map(h => ({ sign: '+', host: h, color: 'var(--color-accent-300)', deco: 'none', note: 'ajouté' })),
+    ] : [];
+    const apply = () => {
+      const list = clean;
+      this.setState({ nsEdit: null });
+      this.upd(dom, y => ({ ...y, nsPending: true }));
+      this.task(dom, 'Mise à jour des serveurs DNS', y => ({ ...y, nsPending: false, ns: list.map(h => ({ host: h, since: 'aujourd’hui' })) }), 3200);
+      this.showToast('Demande envoyée au registre');
+    };
+    return {
+      viewing: !ed, editing: !!ed && ed.step === 'edit', confirming: !!ed && ed.step === 'confirm',
+      pending: !!x.nsPending, canEdit: !x.nsPending,
+      list: x.ns.map((n, i) => ({ host: n.host, dot: x.nsPending ? 'var(--color-neutral-500)' : 'var(--color-accent)', title: `${labels[i] || 'Serveur'} · répond · utilisé depuis ${n.since}` })),
+      edit: () => setDraft([...cur]),
+      drafts: ed ? ed.d.map((host, i) => ({ host, label: labels[i], cantRemove: ed.d.length < 2,
+        onChange: e => { const v = e.target.value; const d = [...this.state.nsEdit.d]; d[i] = v; setDraft(d); },
+        remove: () => setDraft(ed.d.filter((_, j) => j !== i)) })) : [],
+      canAdd: !!ed && ed.d.length < 2,
+      add: () => setDraft([...ed.d, '']),
+      cantReview: !!error || !!unchanged,
+      hasError: !!ed && clean.every(h => h) && !!error, error,
+      onKey: e => { if (e.key === 'Enter') review(); if (e.key === 'Escape') cancel(); },
+      review, cancel, diff, apply, back: () => this.setState({ nsEdit: { ...ed, step: 'edit' } }),
+    };
+  }
+
+  zoneVals(dom, x) {
+    const ed = this.state.editing && this.state.editing.dom === dom ? this.state.editing : null;
+    const draftMap = new Map(x.draft.map(r => [r.id, r]));
+    const pubIds = new Set(x.pub.map(r => r.id));
+    const all = [
+      ...x.pub.map(p => draftMap.has(p.id) ? { r: draftMap.get(p.id), st: same(p, draftMap.get(p.id)) ? '' : 'mod', p } : { r: p, st: 'del', p }),
+      ...x.draft.filter(r => !pubIds.has(r.id)).map(r => ({ r, st: 'new' })),
+      ...x.dyn.map((d, i) => ({ r: { id: 'dyn' + i, sub: d.sub, type: 'A', ttl: d.ttl, target: d.ip }, st: 'dyn' })),
+    ];
+    const pending = all.filter(a => a.st === 'new' || a.st === 'mod' || a.st === 'del').length;
+    const deploying = !!x.deploying;
+    const zf = this.state.zf;
+    const q = zf.q.trim().toLowerCase();
+    const counts = {};
+    all.forEach(a => { counts[a.r.type] = (counts[a.r.type] || 0) + 1; });
+    const setZf = p => this.setState(s => ({ zf: { ...s.zf, ...p } }));
+    const chip = (key, label, n) => {
+      const on = zf.type === key;
+      return { label, n, pick: () => setZf({ type: on && key ? '' : key }),
+        bg: on ? 'color-mix(in srgb, var(--color-accent) 14%, transparent)' : 'transparent',
+        border: on ? 'var(--color-accent)' : 'var(--color-divider)', color: on ? 'var(--color-accent-200)' : 'var(--color-neutral-200)' };
+    };
+    const chips = [chip('', 'Tous', all.length), ...Object.keys(counts).sort().map(t => chip(t, t, counts[t]))];
+
+    const setD = k => e => { const v = e.target.value; this.setState(s => { const d = { ...s.editing.d, [k]: v }; if (k === 'type' && v === 'DMARC' && !d.sub) d.sub = '_dmarc'; return { editing: { ...s.editing, d } }; }); };
+    const cancel = () => this.setState({ editing: null });
+    const errOf = d => {
+      if (!d.target.trim()) return '';
+      if (d.ttl.trim() && (!/^\d+$/.test(d.ttl.trim()) || +d.ttl.trim() < 60)) return 'Le TTL est une durée en secondes, 60 au minimum.';
+      if (d.type === 'A' && !/^\d{1,3}(\.\d{1,3}){3}$/.test(d.target.trim())) return 'Un enregistrement A attend une adresse IPv4.';
+      if (d.type === 'AAAA' && !d.target.includes(':')) return 'Un enregistrement AAAA attend une adresse IPv6.';
+      return '';
+    };
+    const save = () => {
+      const e = this.state.editing; if (!e || !e.d.target.trim() || errOf(e.d)) return;
+      const t = e.d.type, sub = e.d.sub.trim();
+      const rec = { sub: sub === '@' ? '' : sub, type: ALIAS[t] || t, via: ALIAS[t] ? t : null, ttl: e.d.ttl.trim() ? +e.d.ttl.trim() : null, target: e.d.target.trim() };
+      const retype = !e.isNew && e.changing && t !== e.orig;
+      this.upd(dom, y => {
+        let draft = y.draft;
+        if (e.isNew || retype) draft = [...draft.filter(r => !(retype && r.id === e.id)), { ...rec, id: this.uid('r') }];
+        else draft = draft.map(r => r.id === e.id ? { ...rec, id: e.id } : r);
+        return { ...y, draft };
+      });
+      this.setState({ editing: null });
+      this.showToast(retype ? `${e.orig} remplacé par ${t} dans le brouillon` : e.isNew ? `${t} ajouté au brouillon` : `${t} modifié dans le brouillon`);
+    };
+    const onKey = e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel(); };
+    const editRow = d => {
+      const err = errOf(d);
+      const typeSelect = ed.isNew || ed.changing;
+      return { editing: true, viewing: false, changing: !ed.isNew && ed.changing, hasErr: !!err, err, d,
+        typeFixed: !typeSelect, typeSelect, origType: ed.orig,
+        hint: HINTS[d.type] || '', ttlPh: `zone · ${fmtDur(x.zoneTtl)}`,
+        typeOpts: RT.map(v => ({ v, sel: v === d.type, label: ALIAS[v] ? `${v} → TXT` : v })),
+        startChange: () => this.setState(s => ({ editing: { ...s.editing, changing: true } })),
+        stopChange: () => this.setState(s => ({ editing: { ...s.editing, changing: false, d: { ...s.editing.d, type: s.editing.orig } } })),
+        onSub: setD('sub'), onType: setD('type'), onTtl: setD('ttl'), onTarget: setD('target'), onKey, save, cancel,
+        invalid: !d.target.trim() || !!err };
+    };
+    const shown = all.filter(a => (!zf.type || a.r.type === zf.type) && (!q || (a.r.sub || '@').toLowerCase().includes(q) || a.r.target.toLowerCase().includes(q)));
+    const BADGE = { new: ['Nouveau', 'tag-accent'], mod: ['Modifié', 'tag-outline'], del: ['Supprimé', 'tag-neutral'], dyn: ['DynHost', 'tag-neutral'] };
+    const rows = shown.map(({ r, st, p }) => {
+      if (ed && !ed.isNew && ed.id === r.id) return editRow(ed.d);
+      const b = BADGE[st];
+      return {
+        editing: false, changing: false, hasErr: false, viewing: true,
+        subLabel: r.sub || '@', type: r.type, via: r.via || '', hasVia: !!r.via, target: r.target,
+        ttlLabel: r.ttl ? fmtDur(r.ttl) : `zone · ${fmtDur(x.zoneTtl)}`, ttlColor: r.ttl ? 'var(--color-neutral-200)' : 'var(--color-neutral-400)',
+        hasBadge: !!b, badge: b ? b[0] : '', badgeClass: b ? b[1] : '',
+        deco: st === 'del' ? 'line-through' : 'none', opacity: st === 'del' ? 0.55 : 1,
+        isDyn: st === 'dyn', canEdit: st === '' || st === 'new' || st === 'mod', canRestore: st === 'del' || st === 'mod',
+        restoreTitle: st === 'del' ? 'Rétablir' : 'Revenir à la version publiée',
+        edit: () => this.setState({ editing: { dom, id: r.id, isNew: false, changing: false, orig: r.via || r.type, d: { sub: r.sub, type: r.via || r.type, ttl: r.ttl ? String(r.ttl) : '', target: r.target } } }),
+        del: () => this.upd(dom, y => ({ ...y, draft: y.draft.filter(z => z.id !== r.id) })),
+        restore: () => this.upd(dom, y => ({ ...y, draft: st === 'del' ? [...y.draft, p] : y.draft.map(z => z.id === r.id ? p : z) })),
+      };
+    });
+    if (ed && ed.isNew) rows.push(editRow(ed.d));
+    return {
+      q: zf.q, onQ: e => setZf({ q: e.target.value }), chips, rows, empty: rows.length === 0,
+      hasPending: pending > 0, deploying: !pending && deploying, upToDate: !pending && !deploying,
+      pendingLabel: `${pending} modification${pending > 1 ? 's' : ''} non publiée${pending > 1 ? 's' : ''}`,
+      pendingCount: pending,
+      add: () => this.setState({ editing: { dom, id: 'new', isNew: true, changing: false, orig: 'A', d: { sub: '', type: 'A', ttl: '', target: '' } } }),
+      discard: () => { const before = x.draft; this.upd(dom, y => ({ ...y, draft: y.pub })); this.setState({ editing: null }); this.showToast('Brouillon abandonné', () => { this.upd(dom, y => ({ ...y, draft: before })); this.setState({ toast: null }); }); },
+      publish: () => { this.setState({ editing: null }); this.upd(dom, y => ({ ...y, pub: y.draft, deploying: true })); this.task(dom, 'Rafraîchissement de la zone', y => ({ ...y, deploying: false })); this.showToast('Publication de la zone lancée'); },
+    };
+  }
+
+  dynVals(dom, x) {
+    const f = this.state.dynF;
+    const suffix = f.suffix.trim().toLowerCase();
+    const setF = p => this.setState(s => ({ dynF: { ...s.dynF, ...p } }));
+    const gen = () => { const c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'; let p = ''; const a = new Uint32Array(16); crypto.getRandomValues(a); a.forEach(n => { p += c[n % c.length]; }); return p; };
+    const invalid = !/^[a-z0-9-]+$/.test(suffix) || f.pass.length < 8 || x.dynLogins.some(l => l.login === `${dom}-${suffix}`);
+    const copy = (v, what) => () => { try { navigator.clipboard.writeText(v); } catch (e) {} this.showToast(`${what} copié`); };
+    const rv = this.state.dynReveal && this.state.dynReveal.dom === dom ? this.state.dynReveal : null;
+    const pw = this.state.dynPw && this.state.dynPw.dom === dom ? this.state.dynPw : null;
+    const reveal = rv ? (() => {
+      const host = rv.sub === '*' ? `<sous-domaine>.${dom}` : `${rv.sub}.${dom}`;
+      const server = 'dns.eu.ovhapis.com';
+      const curl = `curl -u '${rv.login}:${rv.pass}' "https://${server}/nic/update?system=dyndns&hostname=${host}&myip=<IP>"`;
+      return { title: rv.isNew ? `Identifiant ${rv.login} créé` : `Nouveau mot de passe pour ${rv.login}`, server, host, login: rv.login, pass: rv.pass, curl,
+        copyServer: copy(server, 'Serveur'), copyHost: copy(host, 'Nom d’hôte'), copyLogin: copy(rv.login, 'Identifiant'), copyPass: copy(rv.pass, 'Mot de passe'), copyCurl: copy(curl, 'Commande'),
+        dismiss: () => this.setState({ dynReveal: null }) };
+    })() : {};
+    return {
+      on: x.caps.dynHost, off: !x.caps.dynHost,
+      reason: 'DynHost n’est pas proposé sur cette zone.',
+      hasReveal: !!rv, reveal,
+      logins: x.dynLogins.map(l => {
+        const open = !!pw && pw.login === l.login;
+        const v = open ? pw.v : '';
+        const save = () => { if (v.length < 8) return; this.setState({ dynPw: null, dynReveal: { dom, login: l.login, sub: l.sub, pass: v, isNew: false } }); this.upd(dom, y => ({ ...y, dynLogins: y.dynLogins.map(z => z.login === l.login ? { ...z, pwDate: now() } : z) })); };
+        return { login: l.login, sub: l.sub,
+          pwInfo: l.pwDate ? `Mot de passe défini le ${l.pwDate}` : 'Mot de passe défini',
+          pwOpen: open, pw: v, pwInvalid: v.length < 8,
+          pwEdit: () => this.setState({ dynPw: { dom, login: l.login, v: '' } }),
+          pwCancel: () => this.setState({ dynPw: null }),
+          onPw: e => { const nv = e.target.value; this.setState(s => ({ dynPw: { ...s.dynPw, v: nv } })); },
+          onPwKey: e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') this.setState({ dynPw: null }); },
+          gen: () => this.setState(s => ({ dynPw: { ...s.dynPw, v: gen() } })),
+          pwSave: save,
+          del: () => { this.upd(dom, y => ({ ...y, dynLogins: y.dynLogins.filter(z => z.login !== l.login) })); if (rv && rv.login === l.login) this.setState({ dynReveal: null }); this.showToast('Identifiant supprimé'); } };
+      }),
+      prefix: dom + '-', suffix: f.suffix, sub: f.sub, pass: f.pass,
+      preview: `${dom}-${suffix || '…'}`,
+      onSuffix: e => setF({ suffix: e.target.value }), onSub: e => setF({ sub: e.target.value }), onPass: e => setF({ pass: e.target.value }),
+      gen: () => setF({ pass: gen() }),
+      invalid,
+      create: () => {
+        if (invalid) return;
+        const login = `${dom}-${suffix}`, sub = f.sub.trim() || '*';
+        this.upd(dom, y => ({ ...y, dynLogins: [...y.dynLogins, { login, sub, pwDate: now() }] }));
+        this.setState({ dynReveal: { dom, login, sub, pass: f.pass, isNew: true } });
+        setF({ suffix: '', sub: '', pass: '' });
+      },
+    };
+  }
+  regVals(dom, x) {
+    const L = {
+      locked: ['Activée', 'tag-accent', 'Désactiver', 'Le domaine ne peut pas être transféré vers un autre registrar.'],
+      unlocked: ['Désactivée', 'tag-outline', 'Activer', 'Le domaine peut être transféré. À réactiver après un transfert.'],
+      locking: ['Activation…', 'tag-neutral', 'Activer', 'Demande en cours au registre.'],
+      unlocking: ['Désactivation…', 'tag-neutral', 'Désactiver', 'Demande en cours au registre.'],
+      unavailable: ['Indisponible', 'tag-neutral', 'Activer', 'Le registre de cette extension ne propose pas de verrou de transfert.'],
+    }[x.lock];
+    const toggleLock = () => {
+      const on = x.lock === 'unlocked';
+      this.upd(dom, y => ({ ...y, lock: on ? 'locking' : 'unlocking' }));
+      this.task(dom, on ? 'Activation du verrou de transfert' : 'Désactivation du verrou de transfert', y => ({ ...y, lock: on ? 'locked' : 'unlocked' }));
+    };
+    const D = {
+      enabled: ['Activé', 'tag-accent', 'Désactiver', 'Les réponses DNS de la zone sont signées.'],
+      disabled: ['Désactivé', 'tag-outline', 'Activer', 'Les réponses DNS ne sont pas signées.'],
+      enabling: ['Activation…', 'tag-neutral', 'Activer', 'Signature de la zone en cours.'],
+      disabling: ['Désactivation…', 'tag-neutral', 'Désactiver', 'Retrait des clés en cours.'],
+    }[x.caps.dnssec ? x.dnssec : 'disabled'];
+    const toggleDnssec = () => {
+      const on = x.dnssec === 'disabled';
+      this.upd(dom, y => ({ ...y, dnssec: on ? 'enabling' : 'disabling' }));
+      this.task(dom, on ? 'Activation DNSSEC' : 'Désactivation DNSSEC', y => ({ ...y, dnssec: on ? 'enabled' : 'disabled' }), 3400);
+    };
+    const r = x.renew;
+    const setR = (p, msg) => { this.upd(dom, y => ({ ...y, renew: { ...y.renew, ...p } })); this.showToast(msg); };
+    const mode = (k, label) => {
+      const on = r.mode === k;
+      return { label, pick: () => !on && setR({ mode: k }, `Renouvellement ${label.toLowerCase()}`),
+        bg: on ? 'color-mix(in srgb, var(--color-accent) 12%, transparent)' : 'transparent',
+        ring: on ? 'inset 0 0 0 1px var(--color-accent)' : 'none', color: on ? 'var(--color-accent-200)' : 'var(--color-neutral-200)' };
+    };
+    const desc = r.del ? `Sera supprimé le ${x.expiration}, sans renouvellement.`
+      : r.mode === 'auto' ? `Renouvelé automatiquement le ${x.expiration} pour ${years(r.period)}.`
+      : `Expire le ${x.expiration}. Paiement manuel requis avant cette date.`;
+    const swv = (on, disabled, busy) => ({ on, disabled, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled && !busy ? 0.45 : 1,
+      track: on ? 'color-mix(in srgb, var(--color-accent) 30%, transparent)' : 'var(--color-neutral-800)',
+      trackBorder: on ? 'var(--color-accent)' : 'var(--color-divider)',
+      knob: on ? 'var(--color-accent-200)' : 'var(--color-neutral-400)', knobLeft: on ? '20px' : '2px' });
+    return {
+      lock: { ...swv(x.lock === 'locked' || x.lock === 'locking', !['locked', 'unlocked'].includes(x.lock), x.lock === 'locking' || x.lock === 'unlocking'), label: L[0], aria: 'Protection contre le transfert', desc: L[3], toggle: toggleLock },
+      dnssec: { ...swv(x.caps.dnssec && (x.dnssec === 'enabled' || x.dnssec === 'enabling'), !x.caps.dnssec || !['enabled', 'disabled'].includes(x.dnssec), x.dnssec === 'enabling' || x.dnssec === 'disabling'), label: x.caps.dnssec ? D[0] : 'Non supporté', aria: 'DNSSEC', desc: x.caps.dnssec ? D[3] : 'Le registre de cette extension n’accepte pas DNSSEC.', toggle: toggleDnssec },
+      del: { ...swv(r.del, !x.canDel, false), label: r.del ? 'Activée' : 'Désactivée', aria: 'Supprimer le domaine à l’échéance',
+        desc: x.canDel ? (r.del ? 'Aucun renouvellement ne sera tenté.' : 'Le domaine est conservé tant qu’il est renouvelé.') : 'Non proposé pour cette extension.',
+        toggle: () => x.canDel && setR({ del: !r.del }, !r.del ? 'Suppression à l’échéance programmée' : 'Suppression à l’échéance annulée') },
+      renew: {
+        desc, modes: [mode('auto', 'Automatique'), mode('manual', 'Manuel')],
+        period: String(r.period), periods: x.periods.map(m => ({ v: String(m), label: years(m), sel: m === r.period })),
+        onPeriod: e => setR({ period: +e.target.value }, `Période de renouvellement : ${years(+e.target.value)}`),
+        del: r.del, delDisabled: !x.canDel, delOpacity: x.canDel ? 1 : 0.5,
+        delNote: x.canDel ? (r.del ? 'Aucun renouvellement ne sera tenté.' : '') : 'Non proposé pour cette extension.',
+        toggleDel: e => setR({ del: e.target.checked }, e.target.checked ? 'Suppression à l’échéance programmée' : 'Suppression à l’échéance annulée'),
+      },
+    };
+  }
+
+  glueVals(dom, x) {
+    const f = this.state.glueF;
+    const setF = p => this.setState(s => ({ glueF: { ...s.glueF, ...p } }));
+    const host = f.host.trim().toLowerCase().replace(/\.$/, '');
+    const ips = f.ips.split(/[\s,]+/).filter(Boolean);
+    let err = '';
+    if (host && !host.endsWith('.' + dom)) err = `Le serveur doit se trouver dans ${dom}.`;
+    else if (host && x.glue.some(g => g.host === host)) err = 'Ce serveur a déjà un glue record.';
+    else if (ips.length > 1 && !x.caps.multiIp) err = 'Une seule IP par serveur pour cette extension.';
+    else if (ips.some(i => i.includes(':')) && !x.caps.glueV6) err = 'IPv6 non accepté par ce registre.';
+    else if (ips.some(i => !/^\d{1,3}(\.\d{1,3}){3}$/.test(i) && !i.includes(':'))) err = 'Adresse IP invalide.';
+    const caps = [x.caps.glueV6 ? 'IPv4 et IPv6 acceptés' : 'IPv4 uniquement', x.caps.multiIp ? 'plusieurs IP par serveur, séparées par une virgule' : 'une IP par serveur'];
+    return {
+      on: x.caps.host, off: !x.caps.host, reason: 'Le registre de cette extension ne gère pas les glue records.',
+      items: x.glue.map(g => ({ host: g.host, ips: g.ips.join(', '), pending: !!g.state, idle: !g.state,
+        pendingLabel: g.state === 'adding' ? 'Création en cours…' : 'Suppression en cours…', opacity: g.state === 'deleting' ? 0.5 : 1,
+        del: () => { this.upd(dom, y => ({ ...y, glue: y.glue.map(z => z.id === g.id ? { ...z, state: 'deleting' } : z) })); this.task(dom, `Suppression du glue record ${g.host}`, y => ({ ...y, glue: y.glue.filter(z => z.id !== g.id) })); } })),
+      host: f.host, ips: f.ips, hostPh: `ns1.${dom}`, ipsPh: x.caps.multiIp ? '203.0.113.10, 2001:db8::10' : '203.0.113.10',
+      onHost: e => setF({ host: e.target.value }), onIps: e => setF({ ips: e.target.value }),
+      hasErr: !!err, err, invalid: !host || !ips.length || !!err,
+      capNote: caps.join(' · ') + '.',
+      add: () => {
+        if (!host || !ips.length || err) return;
+        const id = this.uid('g');
+        this.upd(dom, y => ({ ...y, glue: [...y.glue, { id, host, ips, state: 'adding' }] }));
+        this.task(dom, `Création du glue record ${host}`, y => ({ ...y, glue: y.glue.map(z => z.id === id ? { ...z, state: null } : z) }));
+        setF({ host: '', ips: '' });
+      },
+    };
+  }
+
+  contactVals(dom, x) {
+    const ce = this.state.ctEdit && this.state.ctEdit.dom === dom ? this.state.ctEdit : null;
+    const ROLES = [['owner', 'Propriétaire', 'Titulaire du domaine'], ['admin', 'Administratif', 'Décide pour le domaine'], ['tech', 'Technique', 'Reçoit les alertes techniques'], ['billing', 'Facturation', 'Reçoit les factures']];
+    const LABEL = { admin: 'administratif', tech: 'technique', billing: 'de facturation' };
+    return {
+      rows: ROLES.map(([k, role, hint], i) => {
+        const editing = !!ce && ce.role === k;
+        const pending = !!x.ctPending[k];
+        const draft = editing ? ce.v : '';
+        const invalid = !/^[a-z]{2}\d+-ovh$/i.test(draft.trim());
+        const save = () => {
+          if (invalid) return;
+          const nic = draft.trim().toLowerCase();
+          this.setState({ ctEdit: null });
+          this.upd(dom, y => ({ ...y, ctPending: { ...y.ctPending, [k]: true } }));
+          this.task(dom, `Changement du contact ${LABEL[k]}`, y => ({ ...y, ctPending: { ...y.ctPending, [k]: false }, contacts: { ...y.contacts, [k]: [nic, nic] } }), 4000);
+          this.showToast(`Demande envoyée à ${nic}`);
+        };
+        return {
+          role, hint, nic: x.contacts[k][0], name: x.contacts[k][1], border: i ? '1px solid var(--color-divider)' : '0',
+          isOwner: k === 'owner', viewing: !editing, editing, pending,
+          canChange: k !== 'owner' && !editing && !pending,
+          draft, invalid, save,
+          edit: () => this.setState({ ctEdit: { dom, role: k, v: '' } }),
+          cancel: () => this.setState({ ctEdit: null }),
+          onDraft: e => { const v = e.target.value; this.setState(s => ({ ctEdit: { ...s.ctEdit, v } })); },
+          onKey: e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') this.setState({ ctEdit: null }); },
+        };
+      }),
+    };
+  }
+
+  opsVals(dom, x) {
+    const setT = (id, p) => this.upd(dom, y => ({ ...y, tasks: y.tasks.map(t => t.id === id ? { ...t, ...p } : t) }));
+    const run = t => { setT(t.id, { status: 'doing', canAccelerate: false, canCancel: false, canRelaunch: false, comment: null }); this.later(2600, () => this.finishTask(dom, t.id)); };
+    return {
+      empty: x.tasks.length === 0,
+      rows: x.tasks.map(t => {
+        const [statusLabel, tagBg, tagColor, tagIcon] = STATUS[t.status] || [t.status, 'var(--color-neutral-800)', 'var(--color-neutral-200)', 'ph-question'];
+        const note = t.comment || (t.status === 'todo' && t.todo ? `Exécution prévue le ${t.todo}` : '');
+        return {
+          fn: t.fn, statusLabel, tagBg, tagColor, tagIcon, hasIcon: !!tagIcon, running: t.status === 'doing',
+          created: rel(t.createdTs ?? parseLbl(t.created)) || t.created, createdTitle: t.created,
+          done: t.done ? (rel(t.doneTs ?? parseLbl(t.done)) || t.done) : '—', doneTitle: t.done || '',
+          hasNote: !!note, note, noteColor: t.status === 'error' ? 'var(--color-danger-200)' : 'var(--color-neutral-400)',
+          canAccelerate: !!t.canAccelerate && t.status === 'todo', canCancel: !!t.canCancel && t.status === 'todo', canRelaunch: !!t.canRelaunch && t.status === 'error',
+          accelerate: () => run(t), relaunch: () => run(t),
+          cancel: () => { setT(t.id, { status: 'cancelled', canAccelerate: false, canCancel: false, done: now(), doneTs: Date.now() }); this.showToast('Opération annulée'); },
+        };
+      }),
+    };
+  }
+
+  pickerVals(active, list, selId, d) {
+    const pk = this.state.pk || { open: false, q: '', hi: 0 };
+    const q = pk.q.trim().toLowerCase();
+    const matches = list.filter(i => !q || i.id.toLowerCase().includes(q) || (i.offer || '').toLowerCase().includes(q));
+    const hi = Math.min(pk.hi, Math.max(0, matches.length - 1));
+    const set = p => this.setState(s => ({ pk: { ...(s.pk || { open: false, q: '', hi: 0 }), ...p } }));
+    const close = () => set({ open: false, q: '', hi: 0 });
+    const pick = id => { this.setState(s => ({ sel: { ...s.sel, [active]: id }, editing: null, nsEdit: null, ctEdit: null, glueF: { host: '', ips: '' }, dynF: { suffix: '', sub: '', pass: '' }, dynReveal: null, dynPw: null, zf: { type: '', q: '' } })); close(); };
+    this._openPicker = () => set({ open: true, q: '', hi: Math.max(0, list.findIndex(i => i.id === selId)) });
+    return {
+      open: pk.open,
+      border: pk.open ? 'var(--color-accent)' : 'var(--color-divider)',
+      toggle: () => pk.open ? close() : this._openPicker(),
+      close, q: pk.q,
+      placeholder: `Rechercher parmi vos ${d.label.toLowerCase()}`,
+      countLabel: `${matches.length} / ${list.length}`,
+      empty: matches.length === 0,
+      onQ: e => set({ q: e.target.value, hi: 0 }),
+      onKey: e => {
+        if (e.key === 'ArrowDown') { e.preventDefault(); set({ hi: (hi + 1) % Math.max(1, matches.length) }); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); set({ hi: (hi - 1 + matches.length) % Math.max(1, matches.length) }); }
+        else if (e.key === 'Enter' && matches[hi]) pick(matches[hi].id);
+        else if (e.key === 'Escape') close();
+      },
+      rows: matches.map((i, n) => {
+        const name = i.id, at = q ? name.toLowerCase().indexOf(q) : -1;
+        return {
+          pre: at >= 0 ? name.slice(0, at) : name, hit: at >= 0 ? name.slice(at, at + q.length) : '', post: at >= 0 ? name.slice(at + q.length) : '',
+          offer: i.offer, status: i.status, warn: !i.ok, current: i.id === selId,
+          dot: i.ok ? 'var(--color-accent)' : 'var(--color-neutral-400)',
+          bg: n === hi ? 'color-mix(in srgb, var(--color-accent) 12%, transparent)' : 'transparent',
+          hover: () => set({ hi: n }), pick: () => pick(i.id),
+        };
+      }),
+    };
+  }
+
+  componentDidMount() {
+    this._key = e => {
+      if (this.state.screen !== 'app') return;
+      const tag = (e.target.tagName || '').toLowerCase();
+      const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+      if ((e.key === '/' && !typing) || (e.key === 'k' && (e.metaKey || e.ctrlKey))) { e.preventDefault(); this._openPicker && this._openPicker(); }
+    };
+    window.addEventListener('keydown', this._key);
+    this._tick = setInterval(() => { if (this.state.screen === 'app') this.forceUpdate(); }, 30000);
+  }
+  componentWillUnmount() { clearTimeout(this.t); clearTimeout(this.t2); clearTimeout(this.t3); this._timers.forEach(clearTimeout); clearInterval(this._tick); window.removeEventListener('keydown', this._key); }
+  splashMs() { return (this.props.splashSeconds ?? 2.2) * 1000; }
+
+  renderVals() {
+    const prof = PROFILES[this.props.profile ?? 'Complet'] || PROFILES['Complet'];
+    const keys = Object.keys(DATA).filter(k => prof[k] > 0);
+    const active = keys.includes(this.state.section) ? this.state.section : keys[0];
+    const sections = keys.map(k => {
+      const on = k === active;
+      return { label: DATA[k].label, icon: DATA[k].icon, count: prof[k],
+        bg: on ? 'color-mix(in srgb, var(--color-accent) 12%, transparent)' : 'transparent',
+        color: on ? 'var(--color-accent-200)' : 'var(--color-neutral-200)',
+        mark: on ? 'var(--color-accent)' : 'transparent',
+        select: () => this.setState({ section: k }) };
+    });
+    const d = DATA[active];
+    const list = d.items.slice(0, prof[active]);
+    const selId = list.some(i => i.id === this.state.sel[active]) ? this.state.sel[active] : list[0].id;
+    const it = list.find(i => i.id === selId);
+    const isDomain = active === 'domains';
+
+    let dom = {};
+    if (isDomain) {
+      const x = this.dom(selId);
+      const z = this.zoneVals(selId, x);
+      const running = x.tasks.filter(t => t.status === 'doing' || t.status === 'todo').length;
+      const errors = x.tasks.filter(t => t.status === 'error').length;
+      const tab = this.state.tab;
+      const mk = (k, label, n) => ({ label, n, hasN: n > 0, on: tab === k, pick: () => this.setState({ tab: k }),
+        line: tab === k ? 'var(--color-accent)' : 'transparent', color: tab === k ? 'var(--color-text)' : 'var(--color-neutral-300)' });
+      const parts = [running ? `${running} opération${running > 1 ? 's' : ''} en cours` : '', errors ? `${errors} échec${errors > 1 ? 's' : ''}` : ''].filter(Boolean);
+      dom = {
+        dm: {
+          expiryLine: `Expire le ${x.expiration} · ${x.renew.del ? 'suppression à l’échéance' : x.renew.mode === 'auto' ? 'renouvellement automatique' : 'renouvellement manuel'}`,
+          cards: (() => {
+            const go = t => () => this.setState({ tab: t });
+            const muted = 'var(--color-neutral-400)', norm = 'var(--color-text)';
+            const LK = { locked: 'Activée', unlocked: 'Désactivée', locking: 'Activation…', unlocking: 'Désactivation…', unavailable: 'Non disponible' };
+            const DS = { enabled: 'Activé', disabled: 'Désactivé', enabling: 'Activation…', disabling: 'Désactivation…' };
+            return [
+              { k: 'Expiration', v: x.expiration, color: it.ok ? norm : 'var(--color-accent-300)', go: go('reg') },
+              { k: 'Renouvellement', v: x.renew.del ? 'Suppression' : `${x.renew.mode === 'auto' ? 'Auto' : 'Manuel'} · ${years(x.renew.period)}`, color: norm, go: go('reg') },
+              { k: 'DNSSEC', v: x.caps.dnssec ? DS[x.dnssec] : 'Non supporté', color: x.caps.dnssec ? norm : muted, go: go('reg') },
+              { k: 'Protection transfert', v: LK[x.lock], color: x.lock === 'unavailable' ? muted : norm, go: go('reg') },
+              { k: 'Propriétaire', v: x.contacts.owner[1], color: norm, go: go('contacts') },
+            ];
+          })(),
+          hasActivity: parts.length > 0, hasRunning: running > 0, hasErrorOnly: !running && errors > 0,
+          activityLabel: parts.join(' · '), goOps: () => this.setState({ tab: 'ops' }),
+        },
+        tabs: [mk('zone', 'Zone DNS', z.pendingCount), mk('reg', 'Registre', 0), mk('contacts', 'Contacts', 0), mk('ops', 'Opérations', running)],
+        tab: { zone: tab === 'zone', reg: tab === 'reg', contacts: tab === 'contacts', ops: tab === 'ops' },
+        ns: this.nsVals(selId, x), z, dyn: this.dynVals(selId, x), reg: this.regVals(selId, x), glue: this.glueVals(selId, x),
+        ct: this.contactVals(selId, x), ops: this.opsVals(selId, x),
+      };
+    }
+    return {
+      isSplash: this.state.screen === 'splash',
+      isLogin: this.state.screen === 'login',
+      isApp: this.state.screen === 'app',
+      splashDur: this.splashMs() + 'ms',
+      loggingIn: this.state.loggingIn, notLoggingIn: !this.state.loggingIn,
+      loginLabel: this.state.loggingIn ? 'Connexion…' : 'Se connecter',
+      login: () => {
+        if (this.props.skipSplash ?? false) { this.setState({ screen: 'app' }); return; }
+        this.setState({ screen: 'splash' });
+        clearTimeout(this.t); this.t = setTimeout(() => this.setState({ screen: 'app' }), this.splashMs());
+      },
+      logout: () => this.setState({ screen: 'login' }),
+      sections,
+      cur: { label: d.label, icon: d.icon, primary: d.primary, actions2: d.actions2 },
+      selId,
+      pk: this.pickerVals(active, list, selId, d),
+      isDomain, notDomain: !isDomain,
+      ...dom,
+      hasToast: !!this.state.toast,
+      toast: this.state.toast ? { msg: this.state.toast.msg, canUndo: !!this.state.toast.undo, undo: this.state.toast.undo } : {},
+      item: { ...it, name: it.id, tagClass: it.ok ? 'tag-accent' : 'tag-outline', tagBg: it.ok ? 'var(--color-success-800)' : 'transparent', tagColor: it.ok ? 'var(--color-success-200)' : 'var(--color-accent)', infos: it.infos.map(([k, v]) => ({ k, v })) },
+    };
+  }
+}
+</script>
+</body>
+</html>

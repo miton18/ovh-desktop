@@ -1,0 +1,34 @@
+{
+  "name": "ovh-desktop",
+  "private": true,
+  "version": "0.0.1-rc1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "app:dev": "tauri dev",
+    "app:build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.5",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.6"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-log": "^2.9.2"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  },
+  "description": "O.V.H. — console de management OVHcloud alternative, pensée pour être compréhensible. Client tiers non affilié à OVHcloud SAS ; les points du nom le distinguent de la marque officielle. O.V.H. est l'acronyme de « Olès Va Hurler ».",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/miton18/ovh-desktop.git"
+  },
+  "author": "@miton18"
+}

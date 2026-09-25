@@ -1,0 +1,18 @@
+# Node
+node_modules/
+dist/
+*.log
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# OS
+.DS_Store
+/schemas/
+
+# Secret de l'application OVH embarquée — jamais versionné
+src-tauri/.cargo/config.toml
+
+# Versions précédentes des maquettes, gardées pour diffs locaux
+design/*.prev

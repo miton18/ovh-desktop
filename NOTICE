@@ -1,0 +1,12 @@
+O.V.H.
+Copyright 2026 @miton18
+
+Ce produit inclut des travaux développés dans le cadre du projet O.V.H.
+(https://github.com/miton18/ovh-desktop).
+
+O.V.H. est un client tiers de l'API publique OVHcloud. Il n'est ni développé, ni
+approuvé, ni soutenu par OVHcloud SAS. « OVH » et « OVHcloud » sont des marques
+d'OVHcloud SAS ; conformément à l'article 6 de la licence Apache 2.0, la présente
+licence n'accorde aucun droit d'usage sur ces marques.
+
+Les licences des composants tiers redistribués sont listées dans THIRD-PARTY.md.

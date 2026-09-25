@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  # Un tag qui ne correspond pas aux manifestes produirait une release dont les
+  # binaires annoncent une autre version. Autant échouer ici, en dix secondes.
+  version:
+    name: Cohérence du tag et des manifestes
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Vérifier
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          cargo_v=$(grep -m1 '^version = ' src-tauri/Cargo.toml | cut -d'"' -f2)
+          pkg_v=$(node -p "require('./package.json').version")
+          conf_v=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          echo "tag=$tag  Cargo.toml=$cargo_v  package.json=$pkg_v  tauri.conf.json=$conf_v"
+          for v in "$cargo_v" "$pkg_v" "$conf_v"; do
+            if [ "$v" != "$tag" ]; then
+              echo "::error::Le tag v$tag ne correspond pas à la version $v d'un manifeste."
+              exit 1
+            fi
+          done
+
+  build:
+    name: ${{ matrix.name }}
+    needs: version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux amd64
+            runner: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            args: ""
+          # Binaire universel : une seule archive pour Intel et Apple Silicon.
+          - name: macOS universel
+            runner: macos-latest
+            target: universal-apple-darwin
+            args: "--target universal-apple-darwin"
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dépendances système (Linux)
+        if: matrix.runner == 'ubuntu-24.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf \
+            libgtk-3-dev libsoup-3.0-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          # Les deux cibles Apple, nécessaires au binaire universel.
+          targets: ${{ matrix.runner == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: ${{ matrix.target }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Application OVHcloud embarquée dans le binaire publié.
+          #
+          # Sans ces secrets, la release fonctionne quand même : l'utilisateur
+          # fournit alors sa propre application depuis Fichier → Préférences.
+          # À savoir : un secret présent dans un binaire distribué est
+          # extractible. Le garde-fou n'est pas lui, c'est la consumer key,
+          # propre à chaque utilisateur et révocable individuellement.
+          OVH_APPLICATION_KEY: ${{ secrets.OVH_APPLICATION_KEY }}
+          OVH_APPLICATION_SECRET: ${{ secrets.OVH_APPLICATION_SECRET }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: O.V.H. ${{ github.ref_name }}
+          releaseBody: |
+            Binaires pour Linux amd64 et macOS (universel, Intel et Apple Silicon).
+
+            Les builds ne sont pas signés : macOS demandera une confirmation au
+            premier lancement, et Linux peut exiger `chmod +x` sur l'AppImage.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}

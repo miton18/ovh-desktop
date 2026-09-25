@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Une seule exécution par branche : un push qui arrive annule la précédente.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # Le build ne doit jamais dépendre d'un secret : la clé d'application
+  # embarquée est absente en CI, et `option_env!` retombe proprement dessus.
+  RUSTFLAGS: -D warnings
+
+jobs:
+  frontend:
+    name: Frontend — types et build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Types
+        run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
+
+  rust:
+    name: Rust — fmt, clippy, tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # WebKitGTK et ses dépendances : même sans lancer de fenêtre, `tauri`
+      # compile contre elles.
+      - name: Dépendances système
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf \
+            libgtk-3-dev libsoup-3.0-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      # `npm run build` d'abord : `tauri.conf.json` pointe `frontendDist` sur
+      # `dist/`, dont l'absence fait échouer la compilation de `tauri-build`.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - name: Format
+        run: cargo fmt --check
+        working-directory: src-tauri
+
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+        working-directory: src-tauri
+
+      # Les tests `live` sortent sur le réseau et sur le trousseau du système :
+      # ils restent `#[ignore]` et ne tournent pas ici.
+      - name: Tests
+        run: cargo test --lib
+        working-directory: src-tauri
+
+  licences:
+    name: Licences des dépendances
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: src-tauri/Cargo.toml
+          command: check licenses bans
